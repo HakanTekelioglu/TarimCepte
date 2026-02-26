@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
+import 'supabase_mapper.dart';
 
 /// Sezon servisi interface'i
 /// Firebase entegrasyonu için hazır altyapı
@@ -139,5 +141,107 @@ class LocalSeasonService implements ISeasonService {
     }
 
     await prefs.setString(_seasonsKey, jsonEncode(seasons));
+  }
+}
+
+/// Supabase ile çalışan Season servisi
+class SupabaseSeasonService implements ISeasonService {
+  final SupabaseClient _client;
+
+  SupabaseSeasonService({SupabaseClient? client})
+      : _client = client ?? Supabase.instance.client;
+
+  @override
+  Future<List<SeasonModel>> getSeasonsByUserId(String userId) async {
+    final response = await _client
+        .from('seasons')
+        .select()
+        .eq('user_id', userId)
+        .order('start_date', ascending: false);
+
+    return (response as List<dynamic>)
+        .map((item) => seasonFromDbMap(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<SeasonModel?> getActiveSeasonByUserId(String userId) async {
+    final response = await _client
+        .from('seasons')
+        .select()
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return seasonFromDbMap(response);
+  }
+
+  @override
+  Future<SeasonModel> createSeason(String userId, String name) async {
+    await _client
+        .from('seasons')
+        .update({
+          'is_active': false,
+          'end_date': DateTime.now().toIso8601String(),
+        })
+        .eq('user_id', userId)
+        .eq('is_active', true);
+
+    final season = SeasonModel(
+      id: const Uuid().v4(),
+      userId: userId,
+      name: name,
+      startDate: DateTime.now(),
+    );
+
+    final response = await _client
+        .from('seasons')
+        .insert(seasonToDbMap(season))
+        .select()
+        .single();
+
+    return seasonFromDbMap(response);
+  }
+
+  @override
+  Future<void> updateSeason(SeasonModel season) async {
+    await _client
+        .from('seasons')
+        .update(seasonToDbMap(season))
+        .eq('id', season.id);
+  }
+
+  @override
+  Future<void> endSeason(String seasonId) async {
+    await _client.from('seasons').update({
+      'is_active': false,
+      'end_date': DateTime.now().toIso8601String(),
+    }).eq('id', seasonId);
+  }
+
+  @override
+  Future<void> updateSeasonTotals(
+    String seasonId,
+    double grossEarning,
+    double commission,
+    double netEarning,
+    double kg,
+  ) async {
+    final response = await _client
+        .from('seasons')
+        .select()
+        .eq('id', seasonId)
+        .single();
+
+    final season = seasonFromDbMap(response);
+
+    await _client.from('seasons').update({
+      'total_gross_earning': season.totalGrossEarning + grossEarning,
+      'total_commission': season.totalCommission + commission,
+      'total_net_earning': season.totalNetEarning + netEarning,
+      'total_harvests': season.totalHarvests + 1,
+      'total_kg': season.totalKg + kg,
+    }).eq('id', seasonId);
   }
 }

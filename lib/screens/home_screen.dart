@@ -37,7 +37,11 @@ class _HomeScreenState extends State<HomeScreen> {
       
       if (seasonProvider.activeSeason != null) {
         await harvestProvider.loadHarvestsBySeason(seasonProvider.activeSeason!.id);
+      } else {
+        harvestProvider.clearHarvests();
       }
+    } else {
+      harvestProvider.clearHarvests();
     }
   }
 

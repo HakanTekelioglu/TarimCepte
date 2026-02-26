@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
+import 'supabase_mapper.dart';
 
 /// Ürün servisi interface'i
 /// Firebase entegrasyonu için hazır altyapı
@@ -125,5 +127,78 @@ class LocalProductService implements IProductService {
     if (product != null) {
       await updateProduct(product.copyWith(isActive: false));
     }
+  }
+}
+
+/// Supabase ile çalışan Product servisi
+class SupabaseProductService implements IProductService {
+  final SupabaseClient _client;
+
+  SupabaseProductService({SupabaseClient? client})
+      : _client = client ?? Supabase.instance.client;
+
+  @override
+  Future<List<ProductModel>> getAllProducts() async {
+    final response = await _client
+        .from('products')
+        .select()
+        .eq('is_active', true)
+        .order('updated_at', ascending: false);
+
+    return (response as List<dynamic>)
+        .map((item) => productFromDbMap(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  @override
+  Future<ProductModel?> getProductById(String id) async {
+    final response = await _client
+        .from('products')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return productFromDbMap(response);
+  }
+
+  @override
+  Future<ProductModel> addProduct(
+    String name,
+    double pricePerKg,
+    String category,
+  ) async {
+    final product = ProductModel(
+      id: const Uuid().v4(),
+      name: name,
+      pricePerKg: pricePerKg,
+      category: category,
+      updatedAt: DateTime.now(),
+    );
+
+    final response = await _client
+        .from('products')
+        .insert(productToDbMap(product))
+        .select()
+        .single();
+
+    return productFromDbMap(response);
+  }
+
+  @override
+  Future<void> updateProduct(ProductModel product) async {
+    final updated = product.copyWith(updatedAt: DateTime.now());
+    await _client
+        .from('products')
+        .update(productToDbMap(updated))
+        .eq('id', product.id);
+  }
+
+  @override
+  Future<void> deleteProduct(String id) async {
+    await _client
+        .from('products')
+        .update({'is_active': false, 'updated_at': DateTime.now().toIso8601String()})
+        .eq('id', id);
   }
 }

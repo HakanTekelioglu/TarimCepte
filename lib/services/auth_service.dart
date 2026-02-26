@@ -1,13 +1,19 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
+import 'supabase_mapper.dart';
 
 /// Kimlik doğrulama servisi
 /// Firebase entegrasyonu için hazır altyapı
 abstract class IAuthService {
-  Future<UserModel?> login(String email, String password);
-  Future<UserModel?> register(String email, String password, String fullName);
+  Future<UserModel?> login(String phoneNumber, String password);
+  Future<UserModel?> register(
+    String phoneNumber,
+    String password,
+    String fullName,
+  );
   Future<void> logout();
   Future<UserModel?> getCurrentUser();
   Future<void> updateCommissionRate(double rate);
@@ -22,7 +28,7 @@ class LocalAuthService implements IAuthService {
   final Uuid _uuid = const Uuid();
 
   // Admin hesap bilgileri
-  static const String _adminEmail = 'admin@halfiyat.com';
+  static const String _adminPhone = '+916637289596';
   static const String _adminPassword = 'admin123';
   static const String _adminName = 'Admin';
 
@@ -39,12 +45,13 @@ class LocalAuthService implements IAuthService {
       }
 
       // Admin hesabı var mı kontrol et
-      bool adminExists = users.any((u) => (u as Map<String, dynamic>)['email'] == _adminEmail);
+        bool adminExists = users.any((u) =>
+          (u as Map<String, dynamic>)['phoneNumber'] == _adminPhone);
 
       if (!adminExists) {
         final adminUser = UserModel(
           id: _uuid.v4(),
-          email: _adminEmail,
+          phoneNumber: _adminPhone,
           fullName: _adminName,
           createdAt: DateTime.now(),
           isAdmin: true,
@@ -62,7 +69,7 @@ class LocalAuthService implements IAuthService {
   }
 
   @override
-  Future<UserModel?> login(String email, String password) async {
+  Future<UserModel?> login(String phoneNumber, String password) async {
     final prefs = await SharedPreferences.getInstance();
     
     // Admin hesabını oluştur
@@ -75,7 +82,7 @@ class LocalAuthService implements IAuthService {
     final List<dynamic> users = jsonDecode(usersJson);
     for (var userJson in users) {
       final user = userJson as Map<String, dynamic>;
-      if (user['email'] == email && user['password'] == password) {
+      if (user['phoneNumber'] == phoneNumber && user['password'] == password) {
         final userModel = UserModel.fromJson(user);
         await prefs.setString(_userKey, jsonEncode(userModel.toJson()));
         return userModel;
@@ -86,24 +93,24 @@ class LocalAuthService implements IAuthService {
 
   @override
   Future<UserModel?> register(
-      String email, String password, String fullName) async {
+      String phoneNumber, String password, String fullName) async {
     final prefs = await SharedPreferences.getInstance();
     final usersJson = prefs.getString(_usersKey);
 
     List<dynamic> users = [];
     if (usersJson != null) {
       users = jsonDecode(usersJson);
-      // E-posta kontrolü
+      // Telefon numarası kontrolü
       for (var user in users) {
-        if ((user as Map<String, dynamic>)['email'] == email) {
-          throw Exception('Bu e-posta adresi zaten kullanılıyor');
+        if ((user as Map<String, dynamic>)['phoneNumber'] == phoneNumber) {
+          throw Exception('Bu telefon numarası zaten kullanılıyor');
         }
       }
     }
 
     final newUser = UserModel(
       id: _uuid.v4(),
-      email: email,
+      phoneNumber: phoneNumber,
       fullName: fullName,
       createdAt: DateTime.now(),
     );
@@ -157,5 +164,104 @@ class LocalAuthService implements IAuthService {
       }
       await prefs.setString(_usersKey, jsonEncode(users));
     }
+  }
+}
+
+/// Supabase ile çalışan Auth servisi
+class SupabaseAuthService implements IAuthService {
+  final SupabaseClient _client;
+  static const String _sessionUserIdKey = 'supabase_session_user_id';
+
+  SupabaseAuthService({SupabaseClient? client})
+      : _client = client ?? Supabase.instance.client;
+
+  @override
+  Future<UserModel?> login(String phoneNumber, String password) async {
+    final profile = await _client
+        .from('users')
+        .select()
+        .eq('phone_number', phoneNumber)
+        .eq('password', password)
+        .maybeSingle();
+
+    if (profile == null) return null;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_sessionUserIdKey, profile['id'] as String);
+
+    return userFromDbMap(profile);
+  }
+
+  @override
+  Future<UserModel?> register(
+    String phoneNumber,
+    String password,
+    String fullName,
+  ) async {
+    final existingUser = await _client
+        .from('users')
+        .select('id')
+        .eq('phone_number', phoneNumber)
+        .maybeSingle();
+
+    if (existingUser != null) {
+      throw Exception('Bu telefon numarası zaten kullanılıyor.');
+    }
+
+    final createdUser = await _client
+        .from('users')
+        .insert({
+          'phone_number': phoneNumber,
+          'password': password,
+          'full_name': fullName,
+          'commission_rate': 8.0,
+          'is_admin': false,
+          'created_at': DateTime.now().toIso8601String(),
+        })
+        .select()
+        .single();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_sessionUserIdKey, createdUser['id'] as String);
+
+    return userFromDbMap(createdUser);
+  }
+
+  @override
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_sessionUserIdKey);
+  }
+
+  @override
+  Future<UserModel?> getCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString(_sessionUserIdKey);
+    if (userId == null) return null;
+
+    final profile = await _client
+        .from('users')
+        .select()
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (profile == null) {
+      await prefs.remove(_sessionUserIdKey);
+      return null;
+    }
+
+    return userFromDbMap(profile);
+  }
+
+  @override
+  Future<void> updateCommissionRate(double rate) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString(_sessionUserIdKey);
+    if (userId == null) return;
+
+    await _client
+        .from('users')
+        .update({'commission_rate': rate})
+        .eq('id', userId);
   }
 }

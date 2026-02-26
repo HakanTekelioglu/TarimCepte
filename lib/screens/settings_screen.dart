@@ -62,9 +62,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         contentPadding: EdgeInsets.zero,
                       ),
                       ListTile(
-                        leading: const Icon(Icons.email),
-                        title: const Text('E-posta'),
-                        subtitle: Text(user.email),
+                        leading: const Icon(Icons.phone),
+                        title: const Text('Telefon'),
+                        subtitle: Text(user.phoneNumber),
                         contentPadding: EdgeInsets.zero,
                       ),
                       if (user.isAdmin)

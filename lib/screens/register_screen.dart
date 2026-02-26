@@ -13,16 +13,34 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  String _normalizePhoneNumber(String value) {
+    final cleaned = value.replaceAll(RegExp(r'[^0-9+]'), '');
+
+    if (cleaned.startsWith('+')) {
+      return cleaned;
+    }
+
+    if (cleaned.startsWith('90')) {
+      return '+$cleaned';
+    }
+
+    if (cleaned.startsWith('0')) {
+      return '+9${cleaned.substring(1)}';
+    }
+
+    return '+90$cleaned';
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -33,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.register(
-      _emailController.text.trim(),
+      _normalizePhoneNumber(_phoneController.text.trim()),
       _passwordController.text,
       _nameController.text.trim(),
     );
@@ -78,21 +96,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // E-posta alanı
+                // Telefon alanı
                 TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                    labelText: 'E-posta',
-                    prefixIcon: Icon(Icons.email_outlined),
+                    labelText: 'Telefon Numarası',
+                    hintText: '05XXXXXXXXX',
+                    prefixIcon: Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'E-posta giriniz';
+                      return 'Telefon numarası giriniz';
                     }
-                    if (!value.contains('@')) {
-                      return 'Geçerli bir e-posta giriniz';
+                    final digitCount =
+                        value.replaceAll(RegExp(r'[^0-9]'), '').length;
+                    if (digitCount < 10) {
+                      return 'Geçerli bir telefon numarası giriniz';
                     }
                     return null;
                   },

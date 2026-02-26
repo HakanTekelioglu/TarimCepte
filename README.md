@@ -46,7 +46,20 @@ Hal Fiyat, çiftçilerin seradan topladıkları ürünlerin kazançlarını taki
 flutter pub get
 ```
 
-2. **Uygulamayı çalıştırın:**
+2. **Ortam değişkenlerini ayarlayın:**
+- Proje kökünde `.env.example` dosyasını kopyalayıp adını `.env` yapın.
+
+`.env` dosyasına Supabase bilgilerinizi girin:
+```env
+SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
+SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```
+
+3. **Supabase SQL şemasını çalıştırın:**
+- Supabase Dashboard → SQL Editor
+- `supabase/schema.sql` dosyasındaki scripti çalıştırın
+
+4. **Uygulamayı çalıştırın:**
 ```bash
 # Android için
 flutter run
@@ -91,30 +104,23 @@ lib/
     └── app_theme.dart       # Tema ayarları
 ```
 
-## 🔧 Firebase Entegrasyonu
+## 🗄️ Supabase Entegrasyonu
 
-Bu uygulama Firebase entegrasyonu için hazır bir altyapıya sahiptir. Firebase'i etkinleştirmek için:
+Uygulama artık Supabase tabanlıdır ve tüm veriler (`users`, `products`, `seasons`, `harvests`) Supabase Postgres üzerinde tutulur.
 
-1. [Firebase Console](https://console.firebase.google.com/) üzerinden yeni proje oluşturun
-2. Flutter Firebase CLI ile yapılandırın:
-```bash
-dart pub global activate flutterfire_cli
-flutterfire configure
-```
-
-3. Firebase paketlerini ekleyin:
-```bash
-flutter pub add firebase_core firebase_auth cloud_firestore
-```
-
-4. `lib/services/` altındaki servis dosyalarını Firebase implementasyonlarıyla değiştirin
+### Gerekli Supabase Ayarları
+- Authentication zorunlu değil (uygulama `users` tablosunda telefon + şifre ile giriş yapar)
+- SQL Editor'da `supabase/schema.sql` scriptini çalıştırın
+- Project Settings → API bölümünden `SUPABASE_URL` ve `anon` key değerlerini alın
 
 ## 📦 Kullanılan Paketler
 
 | Paket | Açıklama |
 |-------|----------|
 | provider | State management |
-| shared_preferences | Local storage |
+| supabase_flutter | Supabase Auth + Database bağlantısı |
+| flutter_dotenv | `.env` yönetimi |
+| shared_preferences | Local fallback servisleri |
 | intl | Tarih/sayı formatı |
 | uuid | Unique ID oluşturma |
 

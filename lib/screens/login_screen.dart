@@ -13,13 +13,31 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  String _normalizePhoneNumber(String value) {
+    final cleaned = value.replaceAll(RegExp(r'[^0-9+]'), '');
+
+    if (cleaned.startsWith('+')) {
+      return cleaned;
+    }
+
+    if (cleaned.startsWith('90')) {
+      return '+$cleaned';
+    }
+
+    if (cleaned.startsWith('0')) {
+      return '+9${cleaned.substring(1)}';
+    }
+
+    return '+90$cleaned';
+  }
+
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -29,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.login(
-      _emailController.text.trim(),
+      _normalizePhoneNumber(_phoneController.text.trim()),
       _passwordController.text,
     );
 
@@ -77,21 +95,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
 
-                // E-posta alanı
+                // Telefon alanı
                 TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                    labelText: 'E-posta',
-                    prefixIcon: Icon(Icons.email_outlined),
+                    labelText: 'Telefon Numarası',
+                    hintText: '05XXXXXXXXX',
+                    prefixIcon: Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'E-posta giriniz';
+                      return 'Telefon numarası giriniz';
                     }
-                    if (!value.contains('@')) {
-                      return 'Geçerli bir e-posta giriniz';
+                    final digitCount =
+                        value.replaceAll(RegExp(r'[^0-9]'), '').length;
+                    if (digitCount < 10) {
+                      return 'Geçerli bir telefon numarası giriniz';
                     }
                     return null;
                   },

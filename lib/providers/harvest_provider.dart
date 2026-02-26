@@ -138,4 +138,12 @@ class HarvestProvider extends ChangeNotifier {
             h.harvestDate.isAfter(start) && h.harvestDate.isBefore(end))
         .toList();
   }
+
+  /// Kullanıcı/sezon değişiminde eski veriyi temizle
+  void clearHarvests() {
+    _harvests = [];
+    _error = null;
+    _isLoading = false;
+    notifyListeners();
+  }
 }

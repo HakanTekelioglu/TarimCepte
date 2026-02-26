@@ -1,13 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'providers/providers.dart';
 import 'screens/screens.dart';
+import 'services/services.dart';
 import 'utils/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // .env zorunlu değil; --dart-define ile de çalışabilir.
+  }
+
+  final supabaseUrl =
+      dotenv.env['SUPABASE_URL'] ?? const String.fromEnvironment('SUPABASE_URL');
+  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ??
+      const String.fromEnvironment('SUPABASE_ANON_KEY');
+
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw StateError(
+      'SUPABASE_URL ve SUPABASE_ANON_KEY tanımlanmalı (.env veya --dart-define).',
+    );
+  }
+
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
   
   // Türkçe tarih formatı için locale başlat
   await initializeDateFormatting('tr_TR', null);
@@ -18,14 +43,30 @@ void main() async {
 class HalFiyatApp extends StatelessWidget {
   const HalFiyatApp({super.key});
 
+  static final IAuthService _authService = SupabaseAuthService();
+  static final IProductService _productService = SupabaseProductService();
+  static final ISeasonService _seasonService = SupabaseSeasonService();
+  static final IHarvestService _harvestService = SupabaseHarvestService();
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ProductProvider()),
-        ChangeNotifierProvider(create: (_) => HarvestProvider()),
-        ChangeNotifierProvider(create: (_) => SeasonProvider()),
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(authService: _authService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ProductProvider(productService: _productService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => HarvestProvider(
+            harvestService: _harvestService,
+            seasonService: _seasonService,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => SeasonProvider(seasonService: _seasonService),
+        ),
       ],
       child: MaterialApp(
         title: 'Hal Fiyat',

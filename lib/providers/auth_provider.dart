@@ -34,15 +34,15 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Giriş yap
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String phoneNumber, String password) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _currentUser = await _authService.login(email, password);
+      _currentUser = await _authService.login(phoneNumber, password);
       if (_currentUser == null) {
-        _error = 'E-posta veya şifre hatalı';
+        _error = 'Telefon numarası veya şifre hatalı';
       }
     } catch (e) {
       _error = e.toString();
@@ -54,13 +54,21 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Kayıt ol
-  Future<bool> register(String email, String password, String fullName) async {
+  Future<bool> register(
+    String phoneNumber,
+    String password,
+    String fullName,
+  ) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _currentUser = await _authService.register(email, password, fullName);
+      _currentUser = await _authService.register(
+        phoneNumber,
+        password,
+        fullName,
+      );
     } catch (e) {
       _error = e.toString();
     }

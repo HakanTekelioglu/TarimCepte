@@ -208,7 +208,8 @@ class SeasonScreen extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: Theme.of(context).primaryColor,
+                              //color: Theme.of(context).primaryColor,
+                              color: Colors.lightGreen[700],
                             ),
                           ),
                         ],
