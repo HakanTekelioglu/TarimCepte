@@ -15,11 +15,13 @@ abstract class ISeasonService {
   Future<void> endSeason(String seasonId);
   Future<void> updateSeasonTotals(String seasonId, double grossEarning,
       double commission, double netEarning, double kg);
+  Future<void> recalculateSeasonTotals(String seasonId);
 }
 
 /// Local Storage ile çalışan Season servisi
 class LocalSeasonService implements ISeasonService {
   static const String _seasonsKey = 'seasons';
+  static const String _harvestsKey = 'harvests';
   final Uuid _uuid = const Uuid();
 
   @override
@@ -142,6 +144,55 @@ class LocalSeasonService implements ISeasonService {
 
     await prefs.setString(_seasonsKey, jsonEncode(seasons));
   }
+
+  @override
+  Future<void> recalculateSeasonTotals(String seasonId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final seasonsJson = prefs.getString(_seasonsKey);
+
+    if (seasonsJson == null) return;
+
+    final harvestsJson = prefs.getString(_harvestsKey);
+    final List<dynamic> allHarvests =
+        harvestsJson == null ? [] : jsonDecode(harvestsJson);
+
+    final seasonHarvests = allHarvests
+        .map((h) => HarvestModel.fromJson(h as Map<String, dynamic>))
+        .where((h) => h.seasonId == seasonId)
+        .toList();
+
+    final totalGross = seasonHarvests.fold<double>(
+      0,
+      (sum, harvest) => sum + harvest.grossEarning,
+    );
+    final totalCommission = seasonHarvests.fold<double>(
+      0,
+      (sum, harvest) => sum + harvest.commissionAmount,
+    );
+    final totalNet = seasonHarvests.fold<double>(
+      0,
+      (sum, harvest) => sum + harvest.netEarning,
+    );
+    final totalKg = seasonHarvests.fold<double>(
+      0,
+      (sum, harvest) => sum + harvest.totalKg,
+    );
+
+    final List<dynamic> seasons = jsonDecode(seasonsJson);
+    for (int i = 0; i < seasons.length; i++) {
+      final season = seasons[i] as Map<String, dynamic>;
+      if (season['id'] == seasonId) {
+        season['totalGrossEarning'] = totalGross;
+        season['totalCommission'] = totalCommission;
+        season['totalNetEarning'] = totalNet;
+        season['totalHarvests'] = seasonHarvests.length;
+        season['totalKg'] = totalKg;
+        break;
+      }
+    }
+
+    await prefs.setString(_seasonsKey, jsonEncode(seasons));
+  }
 }
 
 /// Supabase ile çalışan Season servisi
@@ -242,6 +293,43 @@ class SupabaseSeasonService implements ISeasonService {
       'total_net_earning': season.totalNetEarning + netEarning,
       'total_harvests': season.totalHarvests + 1,
       'total_kg': season.totalKg + kg,
+    }).eq('id', seasonId);
+  }
+
+  @override
+  Future<void> recalculateSeasonTotals(String seasonId) async {
+    final harvestsResponse = await _client
+        .from('harvests')
+        .select()
+        .eq('season_id', seasonId);
+
+    final seasonHarvests = (harvestsResponse as List<dynamic>)
+        .map((item) => harvestFromDbMap(item as Map<String, dynamic>))
+        .toList();
+
+    final totalGross = seasonHarvests.fold<double>(
+      0,
+      (sum, harvest) => sum + harvest.grossEarning,
+    );
+    final totalCommission = seasonHarvests.fold<double>(
+      0,
+      (sum, harvest) => sum + harvest.commissionAmount,
+    );
+    final totalNet = seasonHarvests.fold<double>(
+      0,
+      (sum, harvest) => sum + harvest.netEarning,
+    );
+    final totalKg = seasonHarvests.fold<double>(
+      0,
+      (sum, harvest) => sum + harvest.totalKg,
+    );
+
+    await _client.from('seasons').update({
+      'total_gross_earning': totalGross,
+      'total_commission': totalCommission,
+      'total_net_earning': totalNet,
+      'total_harvests': seasonHarvests.length,
+      'total_kg': totalKg,
     }).eq('id', seasonId);
   }
 }

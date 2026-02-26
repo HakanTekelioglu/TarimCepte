@@ -12,7 +12,7 @@ abstract class IHarvestService {
   Future<List<HarvestModel>> getHarvestsBySeasonId(String seasonId);
   Future<HarvestModel> addHarvest(HarvestModel harvest);
   Future<void> updateHarvest(HarvestModel harvest);
-  Future<void> deleteHarvest(String id);
+  Future<HarvestModel?> deleteHarvest(String id);
 }
 
 /// Local Storage ile çalışan Harvest servisi
@@ -99,16 +99,27 @@ class LocalHarvestService implements IHarvestService {
   }
 
   @override
-  Future<void> deleteHarvest(String id) async {
+  Future<HarvestModel?> deleteHarvest(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final harvestsJson = prefs.getString(_harvestsKey);
 
-    if (harvestsJson == null) return;
+    if (harvestsJson == null) return null;
 
     final List<dynamic> harvests = jsonDecode(harvestsJson);
+    HarvestModel? deletedHarvest;
+
+    for (final item in harvests) {
+      final harvestMap = item as Map<String, dynamic>;
+      if (harvestMap['id'] == id) {
+        deletedHarvest = HarvestModel.fromJson(harvestMap);
+        break;
+      }
+    }
+
     harvests.removeWhere((h) => (h as Map<String, dynamic>)['id'] == id);
 
     await prefs.setString(_harvestsKey, jsonEncode(harvests));
+    return deletedHarvest;
   }
 }
 
@@ -179,7 +190,15 @@ class SupabaseHarvestService implements IHarvestService {
   }
 
   @override
-  Future<void> deleteHarvest(String id) async {
-    await _client.from('harvests').delete().eq('id', id);
+  Future<HarvestModel?> deleteHarvest(String id) async {
+    final response = await _client
+        .from('harvests')
+        .delete()
+        .eq('id', id)
+        .select()
+        .maybeSingle();
+
+    if (response == null) return null;
+    return harvestFromDbMap(response as Map<String, dynamic>);
   }
 }

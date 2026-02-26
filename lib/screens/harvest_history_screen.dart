@@ -121,9 +121,20 @@ class HarvestHistoryScreen extends StatelessWidget {
                           ),
                         );
                       },
-                      onDismissed: (direction) {
-                        context.read<HarvestProvider>().deleteHarvest(harvest.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                      onDismissed: (direction) async {
+                        final harvestProvider = context.read<HarvestProvider>();
+                        final authProvider = context.read<AuthProvider>();
+                        final seasonProvider = context.read<SeasonProvider>();
+                        final messenger = ScaffoldMessenger.of(context);
+
+                        await harvestProvider.deleteHarvest(harvest.id);
+
+                        final user = authProvider.currentUser;
+                        if (user != null) {
+                          await seasonProvider.loadSeasons(user.id);
+                        }
+
+                        messenger.showSnackBar(
                           const SnackBar(content: Text('Hasat silindi')),
                         );
                       },

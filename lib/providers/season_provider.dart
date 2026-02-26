@@ -26,6 +26,16 @@ class SeasonProvider extends ChangeNotifier {
 
     try {
       _seasons = await _seasonService.getSeasonsByUserId(userId);
+
+      // Geçmişte oluşmuş tutarsızlıkları düzeltmek için
+      // sezon toplamlarını mevcut hasat kayıtlarından yeniden hesapla.
+      if (_seasons.isNotEmpty) {
+        for (final season in _seasons) {
+          await _seasonService.recalculateSeasonTotals(season.id);
+        }
+        _seasons = await _seasonService.getSeasonsByUserId(userId);
+      }
+
       _activeSeason = await _seasonService.getActiveSeasonByUserId(userId);
       _error = null;
     } catch (e) {

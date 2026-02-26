@@ -118,8 +118,13 @@ class HarvestProvider extends ChangeNotifier {
   /// Hasat sil
   Future<void> deleteHarvest(String id) async {
     try {
-      await _harvestService.deleteHarvest(id);
+      final deletedHarvest = await _harvestService.deleteHarvest(id);
       _harvests.removeWhere((h) => h.id == id);
+
+      if (deletedHarvest != null) {
+        await _seasonService.recalculateSeasonTotals(deletedHarvest.seasonId);
+      }
+
       notifyListeners();
     } catch (e) {
       _error = e.toString();
