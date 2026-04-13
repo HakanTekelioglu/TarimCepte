@@ -15,21 +15,33 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
   final _crateCountController = TextEditingController();
   final _totalKgController = TextEditingController();
   final _notesController = TextEditingController();
+  final _customPriceController = TextEditingController();
+
+  bool _useCustomPrice = false;
 
   ProductModel? _selectedProduct;
+
+  /// Aktif fiyatı döndürür: Özel fiyat açıksa kullanıcının girdiği fiyat, kapalıysa admin fiyatı
+  double get _activePrice {
+    if (_useCustomPrice) {
+      return double.tryParse(_customPriceController.text) ?? 0;
+    }
+    return _selectedProduct?.pricePerKg ?? 0;
+  }
 
   @override
   void dispose() {
     _crateCountController.dispose();
     _totalKgController.dispose();
     _notesController.dispose();
+    _customPriceController.dispose();
     super.dispose();
   }
 
   double get _calculatedGross {
     if (_selectedProduct == null) return 0;
     final kg = double.tryParse(_totalKgController.text) ?? 0;
-    return kg * _selectedProduct!.pricePerKg;
+    return kg * _activePrice;
   }
 
   double get _calculatedCommission {
@@ -59,13 +71,17 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
       return;
     }
 
+    final priceToUse = _useCustomPrice
+        ? double.parse(_customPriceController.text)
+        : _selectedProduct!.pricePerKg;
+
     await harvestProvider.addHarvest(
       userId: authProvider.currentUser!.id,
       productId: _selectedProduct!.id,
       productName: _selectedProduct!.name,
       crateCount: int.parse(_crateCountController.text),
       totalKg: double.parse(_totalKgController.text),
-      pricePerKg: _selectedProduct!.pricePerKg,
+      pricePerKg: priceToUse,
       commissionRate: authProvider.currentUser!.commissionRate,
       seasonId: seasonProvider.activeSeason!.id,
       notes: _notesController.text.isNotEmpty ? _notesController.text : null,
@@ -129,6 +145,130 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                       }
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Özel Fiyat Girişi
+                  Card(
+                    color: _useCustomPrice
+                        ? Colors.orange.shade50
+                        : Colors.grey[50],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: _useCustomPrice
+                            ? Colors.orange.shade300
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text(
+                              'Özel Fiyat Kullan',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              _useCustomPrice
+                                  ? 'Kendi fiyatınızı giriyorsunuz'
+                                  : 'Güncel hal fiyatı kullanılıyor',
+                              style: TextStyle(
+                                color: _useCustomPrice
+                                    ? Colors.orange.shade700
+                                    : Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
+                            ),
+                            secondary: Icon(
+                              _useCustomPrice
+                                  ? Icons.edit_note
+                                  : Icons.store,
+                              color: _useCustomPrice
+                                  ? Colors.orange
+                                  : Colors.grey,
+                            ),
+                            value: _useCustomPrice,
+                            activeColor: Colors.orange,
+                            onChanged: (value) {
+                              setState(() {
+                                _useCustomPrice = value;
+                                if (!value) {
+                                  _customPriceController.clear();
+                                }
+                              });
+                            },
+                          ),
+                          if (_useCustomPrice) ...[
+                            const SizedBox(height: 8),
+                            TextFormField(
+                              controller: _customPriceController,
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                              style: TextStyle(
+                                color: Colors.orange.shade900,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: 'Kilogram Fiyatı (₺)',
+                                labelStyle: TextStyle(
+                                  color: Colors.orange.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                hintText: _selectedProduct != null
+                                    ? 'Güncel fiyat: ₺${_selectedProduct!.pricePerKg.toStringAsFixed(2)}'
+                                    : 'Fiyat giriniz',
+                                hintStyle: TextStyle(
+                                  color: Colors.orange.shade400,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                prefixIcon: const Icon(
+                                  Icons.currency_lira,
+                                  color: Colors.orange,
+                                ),
+                                border: const OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.orange.shade400,
+                                    width: 2,
+                                  ),
+                                ),
+                                suffixText: '₺/kg',
+                              ),
+                              onChanged: (_) => setState(() {}),
+                              validator: (value) {
+                                if (!_useCustomPrice) return null;
+                                if (value == null || value.isEmpty) {
+                                  return 'Özel fiyat giriniz';
+                                }
+                                if (double.tryParse(value) == null ||
+                                    double.parse(value) <= 0) {
+                                  return 'Geçerli bir fiyat giriniz';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '💡 Hasatı geç giriyorsanız veya farklı bir fiyattan satış yaptıysanız buraya kendi fiyatınızı yazabilirsiniz.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.orange.shade600,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -208,8 +348,11 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                             ),
                             const Divider(),
                             _buildCalculationRow(
-                              'Kilogram Fiyatı',
-                              '₺${_selectedProduct!.pricePerKg.toStringAsFixed(2)}',
+                              _useCustomPrice
+                                  ? 'Kilogram Fiyatı (Özel)'
+                                  : 'Kilogram Fiyatı',
+                              '₺${_activePrice.toStringAsFixed(2)}',
+                              color: _useCustomPrice ? Colors.orange : null,
                             ),
                             _buildCalculationRow(
                               'Brüt Kazanç',

@@ -15,7 +15,7 @@ void main() async {
   try {
     await dotenv.load(fileName: '.env');
   } catch (_) {
-    // .env zorunlu değil; --dart-define ile de çalışabilir.
+    // env zorunlı değil. bulunamazsa define ile de sağlanabilir.
   }
 
   final supabaseUrl =
@@ -34,8 +34,8 @@ void main() async {
     anonKey: supabaseAnonKey,
   );
   
-  // Türkçe tarih formatı için locale başlat
-  await initializeDateFormatting('tr_TR', null);
+  
+  await initializeDateFormatting('tr_TR', null);  // Türkçe tarih formatı için locale başlatır
   
   runApp(const HalFiyatApp());
 }

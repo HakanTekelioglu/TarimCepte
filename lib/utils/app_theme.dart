@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+// burası tüm proje için kullanılabilecek yardımcı fonksiyonlar
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(

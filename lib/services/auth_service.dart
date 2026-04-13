@@ -32,7 +32,7 @@ class LocalAuthService implements IAuthService {
   static const String _adminPassword = 'admin123';
   static const String _adminName = 'Admin';
 
-  /// Admin hesabını oluştur (uygulama ilk açıldığında)
+  /// Admin hesabını oluşturur (uygulama ilk açıldığında)
   Future<void> initializeAdmin() async {
     final prefs = await SharedPreferences.getInstance();
     final isInitialized = prefs.getBool(_adminInitKey) ?? false;
@@ -44,7 +44,7 @@ class LocalAuthService implements IAuthService {
         users = jsonDecode(usersJson);
       }
 
-      // Admin hesabı var mı kontrol et
+      // Admin hesabı var mı kontrol ediyor
         bool adminExists = users.any((u) =>
           (u as Map<String, dynamic>)['phoneNumber'] == _adminPhone);
 
