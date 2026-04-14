@@ -21,10 +21,10 @@ class ProductModel {
     return ProductModel(
       id: json['id'] as String,
       name: json['name'] as String,
-      pricePerKg: (json['pricePerKg'] as num).toDouble(),
+      pricePerKg: ((json['price_per_kg'] ?? json['pricePerKg']) as num).toDouble(),
       category: json['category'] as String? ?? 'sebze',
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-      isActive: json['isActive'] as bool? ?? true,
+      updatedAt: DateTime.parse((json['updated_at'] ?? json['updatedAt']) as String),
+      isActive: (json['is_active'] ?? json['isActive']) as bool? ?? true,
     );
   }
 

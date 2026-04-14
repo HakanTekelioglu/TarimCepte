@@ -17,6 +17,12 @@ class AppConstants {
       'Gülnar',
       'Çamlıyayla'
     ],
-    'Antalya': [], // Antalya için ilçe kırılımı istenmedi
+    'Antalya': [
+      'Alanya',
+      'Gazipaşa',
+      'Manavgat',
+      'Serik',
+      'Kepez'
+    ],
   };
 }

@@ -139,55 +139,67 @@ class SupabaseProductService implements IProductService {
         .map((json) => ProductModel.fromJson(json as Map<String, dynamic>))
         .toList();
 
-    var query = _client.from('product_prices').select().eq('city', city);
-    if (district != null && district.isNotEmpty) {
-      query = query.eq('district', district);
-    } else {
-      query = query.filter('district', 'is', null);
-    }
-
-    final pricesResponse = await query;
-    final pricesMap = <String, double>{};
-    
-    for (var row in pricesResponse as List<dynamic>) {
-      pricesMap[row['product_id'] as String] = (row['price_per_kg'] as num).toDouble();
-    }
-
-    return baseProducts.map((p) {
-      if (pricesMap.containsKey(p.id)) {
-        return p.copyWith(pricePerKg: pricesMap[p.id]);
+    try {
+      var query = _client.from('product_prices').select().eq('city', city);
+      if (district != null && district.isNotEmpty) {
+        query = query.eq('district', district);
+      } else {
+        query = query.filter('district', 'is', null);
       }
-      return p;
-    }).toList();
+
+      final pricesResponse = await query;
+      final pricesMap = <String, double>{};
+      
+      for (var row in pricesResponse as List<dynamic>) {
+        pricesMap[row['product_id'] as String] = (row['price_per_kg'] as num).toDouble();
+      }
+
+      return baseProducts.map((p) {
+        if (pricesMap.containsKey(p.id)) {
+          return p.copyWith(pricePerKg: pricesMap[p.id]);
+        }
+        return p;
+      }).toList();
+    } catch (e) {
+      // Eğer product_prices tablosu henüz oluşturulmadıysa veya hata verirse,
+      // orijinal ürünleri (varsayılan fiyatlarıyla) döndür.
+      print('fetch product_prices error: $e');
+      return baseProducts;
+    }
   }
 
   @override
   Future<void> updateProductPriceLocation(String productId, String city, String? district, double newPrice) async {
-    final data = {
-      'product_id': productId,
-      'city': city,
-      'district': district,
-      'price_per_kg': newPrice,
-      'updated_at': DateTime.now().toIso8601String(),
-    };
-    
-    // Check if exists
-    var selectQuery = _client.from('product_prices').select('id').eq('product_id', productId).eq('city', city);
-    if (district != null && district.isNotEmpty) {
-      selectQuery = selectQuery.eq('district', district);
-    } else {
-      selectQuery = selectQuery.filter('district', 'is', null);
-    }
-    
-    final existing = await selectQuery.maybeSingle();
-
-    if (existing != null) {
-      await _client.from('product_prices').update({
+    try {
+      final data = {
+        'product_id': productId,
+        'city': city,
+        'district': district,
         'price_per_kg': newPrice,
-        'updated_at': DateTime.now().toIso8601String()
-      }).eq('id', existing['id']);
-    } else {
-      await _client.from('product_prices').insert(data);
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      // Check if exists
+      var selectQuery = _client.from('product_prices').select('id').eq('product_id', productId).eq('city', city);
+      if (district != null && district.isNotEmpty) {
+        selectQuery = selectQuery.eq('district', district);
+      } else {
+        selectQuery = selectQuery.filter('district', 'is', null);
+      }
+
+      final existing = await selectQuery.maybeSingle();
+
+      if (existing != null) {
+        await _client.from('product_prices').update({
+          'price_per_kg': newPrice,
+          'updated_at': DateTime.now().toIso8601String()
+        }).eq('id', existing['id']);
+      } else {
+        await _client.from('product_prices').insert(data);
+      }
+    } catch (e) {
+      print('update product_prices error: $e');
+      throw Exception('Fiyat güncellenirken bir hata oluştu: SQL tablolarının oluşturulduğundan emin olun!');
     }
   }
 }

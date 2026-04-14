@@ -66,7 +66,8 @@ create table if not exists public.products (
   price_per_kg double precision not null,
   category text not null default 'sebze',
   updated_at timestamptz not null default now(),
-  is_active boolean not null default true
+  is_active boolean not null default true,
+  constraint unique_product_name unique(name)
 );
 
 create table if not exists public.seasons (
@@ -198,4 +199,38 @@ values
   ('Üzüm', 80.0, 'meyve'),
   ('Şeftali', 65.0, 'meyve'),
   ('Erik', 50.0, 'meyve')
-on conflict do nothing;
+on conflict (name) do nothing;
+
+-- Mevcut ürünlerin fiyatlarını tüm şehirlere ve ilçelere (Mersin ve Antalya ilçeleri) seed eder.
+-- NOT: district null olduğu durumlarda tekrarlı insert oluşmaması için NOT EXISTS ile kontrol edildi.
+insert into public.product_prices (product_id, city, district, price_per_kg)
+select 
+  p.id, l.city, l.district, p.price_per_kg
+from public.products p
+cross join (
+  values 
+    ('Antalya', 'Alanya'),
+    ('Antalya', 'Gazipaşa'),
+    ('Antalya', 'Manavgat'),
+    ('Antalya', 'Serik'),
+    ('Antalya', 'Kepez'),
+    ('Mersin', 'Akdeniz'),
+    ('Mersin', 'Mezitli'),
+    ('Mersin', 'Toroslar'),
+    ('Mersin', 'Yenişehir'),
+    ('Mersin', 'Tarsus'),
+    ('Mersin', 'Silifke'),
+    ('Mersin', 'Erdemli'),
+    ('Mersin', 'Mut'),
+    ('Mersin', 'Bozyazı'),
+    ('Mersin', 'Anamur'),
+    ('Mersin', 'Aydıncık'),
+    ('Mersin', 'Gülnar'),
+    ('Mersin', 'Çamlıyayla')
+) as l(city, district)
+where not exists (
+  select 1 from public.product_prices pp 
+  where pp.product_id = p.id 
+    and pp.city = l.city 
+    and (pp.district = l.district or (pp.district is null and l.district is null))
+);

@@ -124,9 +124,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
               Expanded(
                 child: TabBarView(
                   children: [
-                    _buildProductList(context, products, isAdmin),
-                    _buildProductList(context, vegetables, isAdmin),
-                    _buildProductList(context, fruits, isAdmin),
+                    _buildProductList(context, products, isAdmin, productProvider),
+                    _buildProductList(context, vegetables, isAdmin, productProvider),
+                    _buildProductList(context, fruits, isAdmin, productProvider),
                   ],
                 ),
               ),
@@ -137,7 +137,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
-  Widget _buildProductList(BuildContext context, List<ProductModel> products, bool isAdmin) {
+  Widget _buildProductList(BuildContext context, List<ProductModel> products, bool isAdmin, ProductProvider productProvider) {
+    if (productProvider.error != null) {
+      return Center(child: Text('Hata: ${productProvider.error}', style: const TextStyle(color: Colors.red)));
+    }
     if (products.isEmpty) {
       return const Center(child: Text('Bu bölgede ürün bulunamadı.'));
     }
