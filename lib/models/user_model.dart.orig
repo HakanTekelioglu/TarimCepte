@@ -6,8 +6,6 @@ class UserModel {
   final double commissionRate; // Komisyoncu kesinti oranı (%)
   final DateTime createdAt;
   final bool isAdmin; // Admin yetkisi
-  final String? city;
-  final String? district;
 
   UserModel({
     required this.id,
@@ -16,8 +14,6 @@ class UserModel {
     this.commissionRate = 8.0, // Varsayılan %
     required this.createdAt,
     this.isAdmin = false, // Varsayılan olarak admin değil
-    this.city,
-    this.district,
   });
 
   /// JSON'dan model oluştur
@@ -29,8 +25,6 @@ class UserModel {
       commissionRate: (json['commissionRate'] as num?)?.toDouble() ?? 8.0,
       createdAt: DateTime.parse(json['createdAt'] as String),
       isAdmin: json['isAdmin'] as bool? ?? false,
-      city: json['city'] as String?,
-      district: json['district'] as String?,
     );
   }
 
@@ -43,8 +37,6 @@ class UserModel {
       'commissionRate': commissionRate,
       'createdAt': createdAt.toIso8601String(),
       'isAdmin': isAdmin,
-      'city': city,
-      'district': district,
     };
   }
 
@@ -56,8 +48,6 @@ class UserModel {
     double? commissionRate,
     DateTime? createdAt,
     bool? isAdmin,
-    String? city,
-    String? district,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -66,8 +56,6 @@ class UserModel {
       commissionRate: commissionRate ?? this.commissionRate,
       createdAt: createdAt ?? this.createdAt,
       isAdmin: isAdmin ?? this.isAdmin,
-      city: city ?? this.city,
-      district: district ?? this.district,
     );
   }
 }

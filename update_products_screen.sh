@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'DART' > lib/screens/products_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/providers.dart';
@@ -222,3 +224,4 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 }
+DART

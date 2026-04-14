@@ -12,10 +12,8 @@ abstract class IAuthService {
   Future<UserModel?> register(
     String phoneNumber,
     String password,
-    String fullName, {
-    String? city,
-    String? district,
-  });
+    String fullName,
+  );
   Future<void> logout();
   Future<UserModel?> getCurrentUser();
   Future<void> updateCommissionRate(double rate);
@@ -73,10 +71,10 @@ class LocalAuthService implements IAuthService {
   @override
   Future<UserModel?> login(String phoneNumber, String password) async {
     final prefs = await SharedPreferences.getInstance();
-
+    
     // Admin hesabını oluştur
     await initializeAdmin();
-
+    
     final usersJson = prefs.getString(_usersKey);
 
     if (usersJson == null) return null;
@@ -84,9 +82,9 @@ class LocalAuthService implements IAuthService {
     final List<dynamic> users = jsonDecode(usersJson);
     for (var userJson in users) {
       final user = userJson as Map<String, dynamic>;
-      if (user['phoneNumber'] == phoneNumber && user['password'] == password) { 
+      if (user['phoneNumber'] == phoneNumber && user['password'] == password) {
         final userModel = UserModel.fromJson(user);
-        await prefs.setString(_userKey, jsonEncode(userModel.toJson()));        
+        await prefs.setString(_userKey, jsonEncode(userModel.toJson()));
         return userModel;
       }
     }
@@ -95,7 +93,7 @@ class LocalAuthService implements IAuthService {
 
   @override
   Future<UserModel?> register(
-      String phoneNumber, String password, String fullName, {String? city, String? district}) async {
+      String phoneNumber, String password, String fullName) async {
     final prefs = await SharedPreferences.getInstance();
     final usersJson = prefs.getString(_usersKey);
 
@@ -104,7 +102,7 @@ class LocalAuthService implements IAuthService {
       users = jsonDecode(usersJson);
       // Telefon numarası kontrolü
       for (var user in users) {
-        if ((user as Map<String, dynamic>)['phoneNumber'] == phoneNumber) {     
+        if ((user as Map<String, dynamic>)['phoneNumber'] == phoneNumber) {
           throw Exception('Bu telefon numarası zaten kullanılıyor');
         }
       }
@@ -115,8 +113,6 @@ class LocalAuthService implements IAuthService {
       phoneNumber: phoneNumber,
       fullName: fullName,
       createdAt: DateTime.now(),
-      city: city,
-      district: district,
     );
 
     final userJson = newUser.toJson();
@@ -200,10 +196,8 @@ class SupabaseAuthService implements IAuthService {
   Future<UserModel?> register(
     String phoneNumber,
     String password,
-    String fullName, {
-    String? city,
-    String? district,
-  }) async {
+    String fullName,
+  ) async {
     final existingUser = await _client
         .from('users')
         .select('id')
@@ -223,14 +217,12 @@ class SupabaseAuthService implements IAuthService {
           'commission_rate': 8.0,
           'is_admin': false,
           'created_at': DateTime.now().toIso8601String(),
-          'city': city,
-          'district': district,
         })
         .select()
         .single();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_sessionUserIdKey, createdUser['id'] as String);      
+    await prefs.setString(_sessionUserIdKey, createdUser['id'] as String);
 
     return userFromDbMap(createdUser);
   }

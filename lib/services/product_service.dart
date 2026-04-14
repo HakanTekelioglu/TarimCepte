@@ -3,37 +3,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
-import 'supabase_mapper.dart';
 
-/// Ürün servisi interface'i
-/// Firebase entegrasyonu için hazır altyapı
 abstract class IProductService {
   Future<List<ProductModel>> getAllProducts();
-  Future<ProductModel?> getProductById(String id);
   Future<ProductModel> addProduct(String name, double pricePerKg, String category);
   Future<void> updateProduct(ProductModel product);
   Future<void> deleteProduct(String id);
+  Future<List<ProductModel>> getProductsByLocation(String city, String? district);
+  Future<void> updateProductPriceLocation(String productId, String city, String? district, double newPrice);
 }
 
-/// Local Storage ile çalışan Product servisi
 class LocalProductService implements IProductService {
   static const String _productsKey = 'products';
   final Uuid _uuid = const Uuid();
-
-  // Varsayılan ürünler
-  final List<Map<String, dynamic>> _defaultProducts = [
-    {'name': 'Salatalık', 'pricePerKg': 75.0, 'category': 'sebze'},
-    {'name': 'Sivri Biber', 'pricePerKg': 60.0, 'category': 'sebze'},
-    {'name': 'Patlıcan', 'pricePerKg': 55.0, 'category': 'sebze'},
-    {'name': 'kıl Biber', 'pricePerKg': 110.0, 'category': 'sebze'},
-    {'name': 'Fasulye', 'pricePerKg': 115.0, 'category': 'sebze'},
-    {'name': 'Domates', 'pricePerKg': 35.0, 'category': 'sebze'},
-    {'name': 'Muz', 'pricePerKg': 50.0, 'category': 'meyve'},
-    {'name': 'Çilek', 'pricePerKg': 120.0, 'category': 'meyve'},
-    {'name': 'Üzüm', 'pricePerKg': 80.0, 'category': 'meyve'},
-    {'name': 'Şeftali', 'pricePerKg': 65.0, 'category': 'meyve'},
-    {'name': 'Erik', 'pricePerKg': 50.0, 'category': 'meyve'},
-  ];
 
   @override
   Future<List<ProductModel>> getAllProducts() async {
@@ -41,65 +23,27 @@ class LocalProductService implements IProductService {
     final productsJson = prefs.getString(_productsKey);
 
     if (productsJson == null) {
-      // Varsayılan ürünleri oluştur
-      await _initializeDefaultProducts();
-      return getAllProducts();
+      final initialProducts = [
+        ProductModel(id: _uuid.v4(), name: 'Salatalık', pricePerKg: 75.0, updatedAt: DateTime.now(), category: 'sebze'),
+        ProductModel(id: _uuid.v4(), name: 'Sivri Biber', pricePerKg: 60.0, updatedAt: DateTime.now(), category: 'sebze'),
+      ];
+      await prefs.setString(_productsKey, jsonEncode(initialProducts.map((p) => p.toJson()).toList()));
+      return initialProducts;
     }
 
-    final List<dynamic> products = jsonDecode(productsJson);
-    return products
-        .map((p) => ProductModel.fromJson(p as Map<String, dynamic>))
-        .where((p) => p.isActive)
-        .toList();
-  }
-
-  Future<void> _initializeDefaultProducts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final products = _defaultProducts.map((p) {
-      return ProductModel(
-        id: _uuid.v4(),
-        name: p['name'] as String,
-        pricePerKg: p['pricePerKg'] as double,
-        category: p['category'] as String,
-        updatedAt: DateTime.now(),
-      ).toJson();
-    }).toList();
-
-    await prefs.setString(_productsKey, jsonEncode(products));
+    final List<dynamic> decoded = jsonDecode(productsJson);
+    return decoded.map((json) => ProductModel.fromJson(json)).where((p) => p.isActive).toList();
   }
 
   @override
-  Future<ProductModel?> getProductById(String id) async {
-    final products = await getAllProducts();
-    try {
-      return products.firstWhere((p) => p.id == id);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  @override
-  Future<ProductModel> addProduct(
-      String name, double pricePerKg, String category) async {
+  Future<ProductModel> addProduct(String name, double pricePerKg, String category) async {
     final prefs = await SharedPreferences.getInstance();
-    final productsJson = prefs.getString(_productsKey);
+    var products = await getAllProducts();
 
-    List<dynamic> products = [];
-    if (productsJson != null) {
-      products = jsonDecode(productsJson);
-    }
-
-    final newProduct = ProductModel(
-      id: _uuid.v4(),
-      name: name,
-      pricePerKg: pricePerKg,
-      category: category,
-      updatedAt: DateTime.now(),
-    );
-
-    products.add(newProduct.toJson());
-    await prefs.setString(_productsKey, jsonEncode(products));
-
+    final newProduct = ProductModel(id: _uuid.v4(), name: name, pricePerKg: pricePerKg, category: category, updatedAt: DateTime.now());
+    products.add(newProduct);
+    
+    await prefs.setString(_productsKey, jsonEncode(products.map((p) => p.toJson()).toList()));
     return newProduct;
   }
 
@@ -107,98 +51,143 @@ class LocalProductService implements IProductService {
   Future<void> updateProduct(ProductModel product) async {
     final prefs = await SharedPreferences.getInstance();
     final productsJson = prefs.getString(_productsKey);
-
-    if (productsJson == null) return;
-
-    final List<dynamic> products = jsonDecode(productsJson);
-    for (int i = 0; i < products.length; i++) {
-      if ((products[i] as Map<String, dynamic>)['id'] == product.id) {
-        products[i] = product.copyWith(updatedAt: DateTime.now()).toJson();
-        break;
+    if (productsJson != null) {
+      final List<dynamic> decoded = jsonDecode(productsJson);
+      final products = decoded.map((json) => ProductModel.fromJson(json)).toList();
+      
+      final index = products.indexWhere((p) => p.id == product.id);
+      if (index != -1) {
+        products[index] = product;
+        await prefs.setString(_productsKey, jsonEncode(products.map((p) => p.toJson()).toList()));
       }
     }
-
-    await prefs.setString(_productsKey, jsonEncode(products));
   }
 
   @override
   Future<void> deleteProduct(String id) async {
-    final product = await getProductById(id);
-    if (product != null) {
-      await updateProduct(product.copyWith(isActive: false));
+    final prefs = await SharedPreferences.getInstance();
+    final productsJson = prefs.getString(_productsKey);
+    if (productsJson != null) {
+      final List<dynamic> decoded = jsonDecode(productsJson);
+      final products = decoded.map((json) => ProductModel.fromJson(json)).toList();
+      
+      final index = products.indexWhere((p) => p.id == id);
+      if (index != -1) {
+        products[index] = products[index].copyWith(isActive: false);
+        await prefs.setString(_productsKey, jsonEncode(products.map((p) => p.toJson()).toList()));
+      }
     }
+  }
+
+  @override
+  Future<List<ProductModel>> getProductsByLocation(String city, String? district) async {
+    return getAllProducts();
+  }
+
+  @override
+  Future<void> updateProductPriceLocation(String productId, String city, String? district, double newPrice) async {
+    // Lokal servis opsiyonel kalsın
   }
 }
 
-/// Supabase ile çalışan Product servisi
 class SupabaseProductService implements IProductService {
   final SupabaseClient _client;
 
-  SupabaseProductService({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+  SupabaseProductService({SupabaseClient? client}) : _client = client ?? Supabase.instance.client;
 
   @override
   Future<List<ProductModel>> getAllProducts() async {
-    final response = await _client
-        .from('products')
-        .select()
-        .eq('is_active', true)
-        .order('updated_at', ascending: false);
-
-    return (response as List<dynamic>)
-        .map((item) => productFromDbMap(item as Map<String, dynamic>))
-        .toList();
+    final response = await _client.from('products').select().eq('is_active', true).order('name');
+    final List<dynamic> data = response;
+    return data.map((json) => ProductModel.fromJson(json)).toList();
   }
 
   @override
-  Future<ProductModel?> getProductById(String id) async {
-    final response = await _client
-        .from('products')
-        .select()
-        .eq('id', id)
-        .maybeSingle();
-
-    if (response == null) return null;
-    return productFromDbMap(response);
-  }
-
-  @override
-  Future<ProductModel> addProduct(
-    String name,
-    double pricePerKg,
-    String category,
-  ) async {
-    final product = ProductModel(
-      id: const Uuid().v4(),
-      name: name,
-      pricePerKg: pricePerKg,
-      category: category,
-      updatedAt: DateTime.now(),
-    );
-
-    final response = await _client
-        .from('products')
-        .insert(productToDbMap(product))
-        .select()
-        .single();
-
-    return productFromDbMap(response);
+  Future<ProductModel> addProduct(String name, double pricePerKg, String category) async {
+    final response = await _client.from('products').insert({
+      'name': name,
+      'price_per_kg': pricePerKg,
+      'category': category,
+    }).select().single();
+    
+    return ProductModel.fromJson(response);
   }
 
   @override
   Future<void> updateProduct(ProductModel product) async {
-    final updated = product.copyWith(updatedAt: DateTime.now());
-    await _client
-        .from('products')
-        .update(productToDbMap(updated))
-        .eq('id', product.id);
+    await _client.from('products').update({
+      'name': product.name,
+      'price_per_kg': product.pricePerKg,
+      'category': product.category,
+      'updated_at': DateTime.now().toIso8601String(),
+      'is_active': product.isActive,
+    }).eq('id', product.id);
   }
 
   @override
   Future<void> deleteProduct(String id) async {
-    await _client
-        .from('products')
-        .update({'is_active': false, 'updated_at': DateTime.now().toIso8601String()})
-        .eq('id', id);
+    await _client.from('products').update({
+      'is_active': false,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', id);
+  }
+
+  @override
+  Future<List<ProductModel>> getProductsByLocation(String city, String? district) async {
+    final productsResponse = await _client.from('products').select().eq('is_active', true).order('name');
+    final List<ProductModel> baseProducts = (productsResponse as List<dynamic>)
+        .map((json) => ProductModel.fromJson(json as Map<String, dynamic>))
+        .toList();
+
+    var query = _client.from('product_prices').select().eq('city', city);
+    if (district != null && district.isNotEmpty) {
+      query = query.eq('district', district);
+    } else {
+      query = query.filter('district', 'is', null);
+    }
+
+    final pricesResponse = await query;
+    final pricesMap = <String, double>{};
+    
+    for (var row in pricesResponse as List<dynamic>) {
+      pricesMap[row['product_id'] as String] = (row['price_per_kg'] as num).toDouble();
+    }
+
+    return baseProducts.map((p) {
+      if (pricesMap.containsKey(p.id)) {
+        return p.copyWith(pricePerKg: pricesMap[p.id]);
+      }
+      return p;
+    }).toList();
+  }
+
+  @override
+  Future<void> updateProductPriceLocation(String productId, String city, String? district, double newPrice) async {
+    final data = {
+      'product_id': productId,
+      'city': city,
+      'district': district,
+      'price_per_kg': newPrice,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    
+    // Check if exists
+    var selectQuery = _client.from('product_prices').select('id').eq('product_id', productId).eq('city', city);
+    if (district != null && district.isNotEmpty) {
+      selectQuery = selectQuery.eq('district', district);
+    } else {
+      selectQuery = selectQuery.filter('district', 'is', null);
+    }
+    
+    final existing = await selectQuery.maybeSingle();
+
+    if (existing != null) {
+      await _client.from('product_prices').update({
+        'price_per_kg': newPrice,
+        'updated_at': DateTime.now().toIso8601String()
+      }).eq('id', existing['id']);
+    } else {
+      await _client.from('product_prices').insert(data);
+    }
   }
 }

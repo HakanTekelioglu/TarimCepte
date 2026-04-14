@@ -1,3 +1,39 @@
+-- Yeni alanların eklenmesi
+alter table public.users add column if not exists city text;
+alter table public.users add column if not exists district text;
+
+-- Fiyatlar bölge tablosu
+create table if not exists public.product_prices (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  city text not null,
+  district text,
+  price_per_kg double precision not null,
+  updated_at timestamptz not null default now(),
+  unique(product_id, city, district)
+);
+
+create index if not exists idx_product_prices_location on public.product_prices(city, district);
+
+-- yetkiler
+alter table public.product_prices disable row level security;
+
+drop policy if exists "product_prices_select_all" on public.product_prices;
+create policy "product_prices_select_all" on public.product_prices
+for select to authenticated
+using (true);
+
+drop policy if exists "product_prices_insert_all" on public.product_prices;
+create policy "product_prices_insert_all" on public.product_prices
+for insert to authenticated
+with check (true);
+
+drop policy if exists "product_prices_update_all" on public.product_prices;
+create policy "product_prices_update_all" on public.product_prices
+for update to authenticated
+using (true)
+with check (true);
+
 -- Hal Fiyat Supabase şeması (MVP)
 -- Supabase SQL Editor içinde çalıştırın.
 

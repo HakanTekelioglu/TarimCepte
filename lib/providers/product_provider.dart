@@ -8,6 +8,8 @@ class ProductProvider extends ChangeNotifier {
   List<ProductModel> _products = [];
   bool _isLoading = false;
   String? _error;
+  String? selectedCity;
+  String? selectedDistrict;
 
   ProductProvider({IProductService? productService})
       : _productService = productService ?? LocalProductService();
@@ -37,12 +39,29 @@ class ProductProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Şehir ve ilçeye göre ürünleri yükle
+  Future<void> loadProductsByLocation(String city, String? district) async {
+    _isLoading = true;
+    selectedCity = city;
+    selectedDistrict = district;
+    notifyListeners();
+
+    try {
+      _products = await _productService.getProductsByLocation(city, district);
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
   /// Yeni ürün ekle
   Future<void> addProduct(
       String name, double pricePerKg, String category) async {
     try {
-      final product =
-          await _productService.addProduct(name, pricePerKg, category);
+      final product = await _productService.addProduct(name, pricePerKg, category);
       _products.add(product);
       notifyListeners();
     } catch (e) {
@@ -66,10 +85,25 @@ class ProductProvider extends ChangeNotifier {
 
   /// Ürün fiyatını güncelle
   Future<void> updateProductPrice(String productId, double newPrice) async {
-    final index = _products.indexWhere((p) => p.id == productId);
-    if (index != -1) {
-      final updatedProduct = _products[index].copyWith(pricePerKg: newPrice);
-      await updateProduct(updatedProduct);
+    if (selectedCity != null) {
+      try {
+        await _productService.updateProductPriceLocation(
+            productId, selectedCity!, selectedDistrict, newPrice);
+            
+        final index = _products.indexWhere((p) => p.id == productId);
+        if (index != -1) {
+          _products[index] = _products[index].copyWith(pricePerKg: newPrice);
+          notifyListeners();
+        }
+      } catch (e) {
+        _error = e.toString();
+      }
+    } else {
+      final index = _products.indexWhere((p) => p.id == productId);
+      if (index != -1) {
+        final updatedProduct = _products[index].copyWith(pricePerKg: newPrice);
+        await updateProduct(updatedProduct);
+      }
     }
   }
 

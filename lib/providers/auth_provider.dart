@@ -57,8 +57,10 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> register(
     String phoneNumber,
     String password,
-    String fullName,
-  ) async {
+    String fullName, {
+    String? city,
+    String? district,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -68,6 +70,8 @@ class AuthProvider extends ChangeNotifier {
         phoneNumber,
         password,
         fullName,
+        city: city,
+        district: district,
       );
     } catch (e) {
       _error = e.toString();

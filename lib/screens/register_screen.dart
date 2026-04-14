@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/providers.dart';
+import '../utils/app_constants.dart';
 import 'home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -18,6 +19,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  
+  String _selectedCity = AppConstants.cities.first;
+  String? _selectedDistrict;
 
   String _normalizePhoneNumber(String value) {
     final cleaned = value.replaceAll(RegExp(r'[^0-9+]'), '');
@@ -54,6 +58,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _normalizePhoneNumber(_phoneController.text.trim()),
       _passwordController.text,
       _nameController.text.trim(),
+      city: _selectedCity,
+      district: _selectedDistrict,
     );
 
     if (success && mounted) {
@@ -66,6 +72,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final distList = AppConstants.cityDistricts[_selectedCity] ?? [];
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kayıt Ol'),
@@ -169,7 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       onPressed: () {
                         setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                          _obscureConfirmPassword = !_obscureConfirmPassword;   
                         });
                       },
                     ),
@@ -184,6 +192,58 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
+                
+                DropdownButtonFormField<String>(
+                  value: _selectedCity,
+                  decoration: const InputDecoration(
+                    labelText: 'Şehir Seçimi',
+                    prefixIcon: Icon(Icons.location_city),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: AppConstants.cities.map((String c) {
+                    return DropdownMenuItem<String>(
+                      value: c,
+                      child: Text(c),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedCity = newValue;
+                        final dList = AppConstants.cityDistricts[newValue] ?? [];
+                        _selectedDistrict = dList.isNotEmpty ? dList.first : null;
+                      });
+                    }
+                  },
+                ),
+                
+                if (distList.isNotEmpty)
+                   Padding(
+                     padding: const EdgeInsets.only(top: 16),
+                     child: DropdownButtonFormField<String>(
+                        value: _selectedDistrict,
+                        decoration: const InputDecoration(
+                          labelText: 'İlçe Seçimi',
+                          prefixIcon: Icon(Icons.map),
+                          border: OutlineInputBorder(),
+                        ),
+                        items: distList.map((String d) {
+                          return DropdownMenuItem<String>(
+                            value: d,
+                            child: Text(d),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedDistrict = newValue;
+                            });
+                          }
+                        },
+                      ),
+                   ),
+
                 const SizedBox(height: 24),
 
                 // Hata mesajı
@@ -207,15 +267,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Consumer<AuthProvider>(
                   builder: (context, auth, _) {
                     return ElevatedButton(
-                      onPressed: auth.isLoading ? null : _handleRegister,
+                      onPressed: auth.isLoading ? null : _handleRegister,       
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),      
                       ),
                       child: auth.isLoading
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(strokeWidth: 2), 
                             )
                           : const Text(
                               'Kayıt Ol',
