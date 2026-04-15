@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../utils/formatters.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
 
@@ -130,7 +131,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                       return DropdownMenuItem(
                         value: product,
                         child: Text(
-                          '${product.name} (₺${product.pricePerKg.toStringAsFixed(2)}/kg)',
+                          '${product.name} (₺${product.pricePerKg.toPriceString(2)}/kg)',
                         ),
                       );
                     }).toList(),
@@ -224,7 +225,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                                   fontWeight: FontWeight.w500,
                                 ),
                                 hintText: _selectedProduct != null
-                                    ? 'Güncel fiyat: ₺${_selectedProduct!.pricePerKg.toStringAsFixed(2)}'
+                                    ? 'Güncel fiyat: ₺${_selectedProduct!.pricePerKg.toPriceString(2)}'
                                     : 'Fiyat giriniz',
                                 hintStyle: TextStyle(
                                   color: Colors.orange.shade400,
@@ -351,18 +352,18 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                               _useCustomPrice
                                   ? 'Kilogram Fiyatı (Özel)'
                                   : 'Kilogram Fiyatı',
-                              '₺${_activePrice.toStringAsFixed(2)}',
+                              '₺${_activePrice.toPriceString(2)}',
                               color: _useCustomPrice ? Colors.orange : null,
                             ),
                             _buildCalculationRow(
                               'Brüt Kazanç',
-                              '₺${_calculatedGross.toStringAsFixed(2)}',
+                              '₺${_calculatedGross.toPriceString(2)}',
                             ),
                             Consumer<AuthProvider>(
                               builder: (context, auth, _) {
                                 return _buildCalculationRow(
-                                  'Komisyon (%${auth.currentUser?.commissionRate.toStringAsFixed(1) ?? '8.0'})',
-                                  '-₺${_calculatedCommission.toStringAsFixed(2)}',
+                                  'Komisyon (%${auth.currentUser?.commissionRate.toPriceString(1) ?? '8.0'})',
+                                  '-₺${_calculatedCommission.toPriceString(2)}',
                                   color: Colors.red,
                                 );
                               },
@@ -370,7 +371,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                             const Divider(),
                             _buildCalculationRow(
                               'Net Kazanç',
-                              '₺${_calculatedNet.toStringAsFixed(2)}',
+                              '₺${_calculatedNet.toPriceString(2)}',
                               isBold: true,
                               color: Colors.green,
                             ),

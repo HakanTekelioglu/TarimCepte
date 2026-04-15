@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../utils/formatters.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
 
@@ -160,7 +161,7 @@ class SeasonScreen extends StatelessWidget {
                         Expanded(
                           child: _buildStatItem(
                             'Toplam Kg',
-                            '${season.totalKg.toStringAsFixed(0)}',
+                            season.totalKg.toPriceString(0),
                             Icons.scale,
                             Colors.blue,
                           ),
@@ -173,7 +174,7 @@ class SeasonScreen extends StatelessWidget {
                         Expanded(
                           child: _buildStatItem(
                             'Brüt Kazanç',
-                            '₺${season.totalGrossEarning.toStringAsFixed(0)}',
+                            '₺${season.totalGrossEarning.toPriceString(0)}',
                             Icons.payments,
                             Colors.orange,
                           ),
@@ -181,7 +182,7 @@ class SeasonScreen extends StatelessWidget {
                         Expanded(
                           child: _buildStatItem(
                             'Komisyon',
-                            '₺${season.totalCommission.toStringAsFixed(0)}',
+                            '₺${season.totalCommission.toPriceString(0)}',
                             Icons.remove_circle,
                             Colors.red,
                           ),
@@ -204,7 +205,7 @@ class SeasonScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Net Kazanç: ₺${season.totalNetEarning.toStringAsFixed(2)}',
+                            'Net Kazanç: ₺${season.totalNetEarning.toPriceString(2)}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,

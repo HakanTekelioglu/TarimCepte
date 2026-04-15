@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../utils/formatters.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
 import '../utils/app_constants.dart';
@@ -158,7 +159,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${product.pricePerKg.toStringAsFixed(2)} ₺/kg',
+                  '${product.pricePerKg.toPriceString(2)} ₺/kg',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 if (isAdmin)

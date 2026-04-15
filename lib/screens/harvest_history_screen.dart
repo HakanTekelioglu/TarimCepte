@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../utils/formatters.dart';
 import '../providers/providers.dart';
+import '../models/models.dart';
 
 class HarvestHistoryScreen extends StatelessWidget {
   const HarvestHistoryScreen({super.key});
@@ -39,7 +41,7 @@ class HarvestHistoryScreen extends StatelessWidget {
         }
 
         // Tarihe göre grupla
-        final Map<String, List> groupedHarvests = {};
+        final Map<String, List<HarvestModel>> groupedHarvests = {};
         final dateFormat = DateFormat('dd MMMM yyyy', 'tr_TR');
 
         for (var harvest in harvests) {
@@ -78,7 +80,7 @@ class HarvestHistoryScreen extends StatelessWidget {
                             ),
                       ),
                       Text(
-                        '₺${dayTotal.toStringAsFixed(2)}',
+                        '₺${dayTotal.toPriceString(2)}',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
@@ -147,10 +149,10 @@ class HarvestHistoryScreen extends StatelessWidget {
                           ),
                           title: Text(harvest.productName),
                           subtitle: Text(
-                            '${harvest.crateCount} sandık - ${harvest.totalKg.toStringAsFixed(1)} kg',
+                            '${harvest.crateCount} sandık - ${harvest.totalKg.toPriceString(1)} kg',
                           ),
                           trailing: Text(
-                            '₺${harvest.netEarning.toStringAsFixed(2)}',
+                            '₺${harvest.netEarning.toPriceString(2)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
@@ -163,21 +165,21 @@ class HarvestHistoryScreen extends StatelessWidget {
                                 children: [
                                   _buildDetailRow(
                                     'Birim Fiyat',
-                                    '₺${harvest.pricePerKg.toStringAsFixed(2)}/kg',
+                                    '₺${harvest.pricePerKg.toPriceString(2)}/kg',
                                   ),
                                   _buildDetailRow(
                                     'Brüt Kazanç',
-                                    '₺${harvest.grossEarning.toStringAsFixed(2)}',
+                                    '₺${harvest.grossEarning.toPriceString(2)}',
                                   ),
                                   _buildDetailRow(
-                                    'Komisyon (%${harvest.commissionRate.toStringAsFixed(1)})',
-                                    '-₺${harvest.commissionAmount.toStringAsFixed(2)}',
+                                    'Komisyon (%${harvest.commissionRate.toPriceString(1)})',
+                                    '-₺${harvest.commissionAmount.toPriceString(2)}',
                                     color: Colors.red,
                                   ),
                                   const Divider(),
                                   _buildDetailRow(
                                     'Net Kazanç',
-                                    '₺${harvest.netEarning.toStringAsFixed(2)}',
+                                    '₺${harvest.netEarning.toPriceString(2)}',
                                     isBold: true,
                                     color: Colors.green,
                                   ),

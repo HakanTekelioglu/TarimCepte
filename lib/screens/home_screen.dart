@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../utils/formatters.dart';
 import '../providers/providers.dart';
 import 'login_screen.dart';
 import 'products_screen.dart';
@@ -181,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                               Text(
-                                'Komisyon Oranı: %${user.commissionRate.toStringAsFixed(1)}',
+                                'Komisyon Oranı: %${user.commissionRate.toPriceString(1)}',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Colors.grey[600],
                                     ),
@@ -220,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: _buildStatCard(
                           'Toplam Kg',
-                          '${harvest.totalKg.toStringAsFixed(1)} kg',
+                          '${harvest.totalKg.toPriceString(1)} kg',
                           Icons.scale,
                           Colors.blue,
                         ),
@@ -233,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: _buildStatCard(
                           'Brüt Kazanç',
-                          '₺${harvest.totalGrossEarning.toStringAsFixed(2)}',
+                          '₺${harvest.totalGrossEarning.toPriceString(2)}',
                           Icons.payments,
                           Colors.orange,
                         ),
@@ -242,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: _buildStatCard(
                           'Komisyon',
-                          '₺${harvest.totalCommission.toStringAsFixed(2)}',
+                          '₺${harvest.totalCommission.toPriceString(2)}',
                           Icons.remove_circle,
                           Colors.red,
                         ),
@@ -275,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '₺${harvest.totalNetEarning.toStringAsFixed(2)}',
+                                  '₺${harvest.totalNetEarning.toPriceString(2)}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 28,
@@ -342,10 +343,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           title: Text(h.productName),
                           subtitle: Text(
-                            '${h.crateCount} sandık - ${h.totalKg.toStringAsFixed(1)} kg',
+                            '${h.crateCount} sandık - ${h.totalKg.toPriceString(1)} kg',
                           ),
                           trailing: Text(
-                            '₺${h.netEarning.toStringAsFixed(2)}',
+                            '₺${h.netEarning.toPriceString(2)}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
