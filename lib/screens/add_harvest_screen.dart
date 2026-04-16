@@ -31,6 +31,15 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Default olarak Mersin / Bozyazı fiyatlarını yükle
+    Future.microtask(() {
+      context.read<ProductProvider>().loadProductsByLocation('Mersin', 'Bozyazı');
+    });
+  }
+
+  @override
   void dispose() {
     _crateCountController.dispose();
     _totalKgController.dispose();
@@ -110,6 +119,10 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
       ),
       body: Consumer<ProductProvider>(
         builder: (context, productProvider, _) {
+          if (productProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
           final products = productProvider.products;
 
           return SingleChildScrollView(
