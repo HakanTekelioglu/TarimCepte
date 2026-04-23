@@ -214,19 +214,12 @@ cross join (
     ('Antalya', 'Manavgat'),
     ('Antalya', 'Serik'),
     ('Antalya', 'Kepez'),
-    ('Mersin', 'Akdeniz'),
-    ('Mersin', 'Mezitli'),
-    ('Mersin', 'Toroslar'),
-    ('Mersin', 'Yenişehir'),
+    ('Mersin', 'Merkez'),
     ('Mersin', 'Tarsus'),
-    ('Mersin', 'Silifke'),
     ('Mersin', 'Erdemli'),
-    ('Mersin', 'Mut'),
-    ('Mersin', 'Bozyazı'),
-    ('Mersin', 'Anamur'),
     ('Mersin', 'Aydıncık'),
-    ('Mersin', 'Gülnar'),
-    ('Mersin', 'Çamlıyayla')
+    ('Mersin', 'Bozyazı/Tekeli'),
+    ('Mersin', 'Anamur')
 ) as l(city, district)
 where not exists (
   select 1 from public.product_prices pp 

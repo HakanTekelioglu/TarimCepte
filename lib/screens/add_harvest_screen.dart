@@ -29,7 +29,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
     final user = authProvider.currentUser;
 
     const fallbackCity = 'Mersin';
-    const fallbackDistrict = 'Bozyazı';
+    const fallbackDistrict = 'Bozyazı/Tekeli';
 
     final rawCity = user?.city?.trim();
     final rawDistrict = user?.district?.trim();
@@ -52,18 +52,33 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
 
     String? district;
     final districtList = AppConstants.cityDistricts[city] ?? const <String>[];
+    final hasUserDistrict = rawDistrict != null && rawDistrict.isNotEmpty;
 
-    if (rawDistrict != null && rawDistrict.isNotEmpty) {
-      for (final candidate in districtList) {
-        if (candidate.toLowerCase() == rawDistrict.toLowerCase()) {
-          district = candidate;
-          break;
+    if (hasUserDistrict) {
+      final normalizedInputDistrict = rawDistrict!.toLowerCase();
+
+      if (city == 'Mersin' &&
+          (normalizedInputDistrict == 'bozyazı' ||
+              normalizedInputDistrict == 'bozyazi' ||
+              normalizedInputDistrict == 'tekeli') &&
+          districtList.contains('Bozyazı/Tekeli')) {
+        district = 'Bozyazı/Tekeli';
+      }
+
+      if (district == null) {
+        for (final candidate in districtList) {
+          if (candidate.toLowerCase() == normalizedInputDistrict) {
+            district = candidate;
+            break;
+          }
         }
       }
     }
 
     if (district == null) {
-      if (city == fallbackCity && districtList.contains(fallbackDistrict)) {
+      if (!hasUserDistrict &&
+          city == fallbackCity &&
+          districtList.contains(fallbackDistrict)) {
         district = fallbackDistrict;
       } else if (districtList.isNotEmpty) {
         district = districtList.first;

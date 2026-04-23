@@ -27,7 +27,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
       // Valide district
       if (initDistrict != null) {
         final distList = AppConstants.cityDistricts[initCity] ?? [];
-        if (!distList.contains(initDistrict)) {
+        final normalizedInitDistrict = initDistrict.trim().toLowerCase();
+
+        final caseInsensitiveMatch = distList.where(
+          (district) => district.toLowerCase() == normalizedInitDistrict,
+        );
+
+        if (caseInsensitiveMatch.isNotEmpty) {
+          initDistrict = caseInsensitiveMatch.first;
+        } else if (initCity == 'Mersin' &&
+            (normalizedInitDistrict == 'bozyazı' ||
+                normalizedInitDistrict == 'bozyazi' ||
+                normalizedInitDistrict == 'tekeli') &&
+            distList.contains('Bozyazı/Tekeli')) {
+          initDistrict = 'Bozyazı/Tekeli';
+        } else {
           initDistrict = distList.isNotEmpty ? distList.first : null;
         }
       } else {

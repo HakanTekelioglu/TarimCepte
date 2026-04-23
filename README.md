@@ -59,7 +59,12 @@ SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 - Supabase Dashboard → SQL Editor
 - `supabase/schema.sql` dosyasındaki scripti çalıştırın
 
-4. **Uygulamayı çalıştırın:**
+4. **(Mevcut kurulumlar için) ilçe normalizasyon migration'ını çalıştırın:**
+- Eğer veritabanında eski Mersin ilçe kayıtları varsa,
+  `supabase/migrations/2026-04-23_mersin_district_normalization.sql` dosyasını SQL Editor'da çalıştırın.
+
+5. **Uygulamayı çalıştırın:**
+
 ```bash
 # Android için
 flutter run

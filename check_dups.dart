@@ -14,8 +14,8 @@ void main() async {
     print(p);
   }
   
-  final prices = await client.from('product_prices').select('id, product_id, city, district, price_per_kg').eq('city', 'Mersin').eq('district', 'Bozyazı');
-  print("\nPrices for Bozyazı:");
+  final prices = await client.from('product_prices').select('id, product_id, city, district, price_per_kg').eq('city', 'Mersin').eq('district', 'Bozyazı/Tekeli');
+  print("\nPrices for Bozyazı/Tekeli:");
   for (var p in prices.where((p) => prods.any((prod) => prod['id'] == p['product_id']))) {
     print(p);
   }
