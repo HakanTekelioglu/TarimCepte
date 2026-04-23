@@ -14,6 +14,8 @@ Map<String, dynamic> userToDbMap(UserModel user) {
     'commission_rate': user.commissionRate,
     'created_at': user.createdAt.toIso8601String(),
     'is_admin': user.isAdmin,
+    'city': user.city,
+    'district': user.district,
   };
 }
 
@@ -25,6 +27,8 @@ UserModel userFromDbMap(Map<String, dynamic> map) {
     commissionRate: (map['commission_rate'] as num?)?.toDouble() ?? 8.0,
     createdAt: _parseDate(map['created_at']),
     isAdmin: map['is_admin'] as bool? ?? false,
+    city: map['city'] as String?,
+    district: map['district'] as String?,
   );
 }
 

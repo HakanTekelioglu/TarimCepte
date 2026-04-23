@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/formatters.dart';
+import '../utils/app_constants.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
 
@@ -22,6 +23,60 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
 
   ProductModel? _selectedProduct;
 
+  void _loadProductsForUserLocation() {
+    final authProvider = context.read<AuthProvider>();
+    final productProvider = context.read<ProductProvider>();
+    final user = authProvider.currentUser;
+
+    const fallbackCity = 'Mersin';
+    const fallbackDistrict = 'Bozyazı';
+
+    final rawCity = user?.city?.trim();
+    final rawDistrict = user?.district?.trim();
+
+    String city;
+    if (rawCity != null && rawCity.isNotEmpty) {
+      city = AppConstants.cities.firstWhere(
+        (c) => c.toLowerCase() == rawCity.toLowerCase(),
+        orElse: () => rawCity,
+      );
+    } else {
+      city = fallbackCity;
+    }
+
+    if (!AppConstants.cityDistricts.containsKey(city)) {
+      city = AppConstants.cityDistricts.containsKey(fallbackCity)
+          ? fallbackCity
+          : AppConstants.cities.first;
+    }
+
+    String? district;
+    final districtList = AppConstants.cityDistricts[city] ?? const <String>[];
+
+    if (rawDistrict != null && rawDistrict.isNotEmpty) {
+      for (final candidate in districtList) {
+        if (candidate.toLowerCase() == rawDistrict.toLowerCase()) {
+          district = candidate;
+          break;
+        }
+      }
+    }
+
+    if (district == null) {
+      if (city == fallbackCity && districtList.contains(fallbackDistrict)) {
+        district = fallbackDistrict;
+      } else if (districtList.isNotEmpty) {
+        district = districtList.first;
+      }
+    }
+
+    if (productProvider.selectedCity != city ||
+        productProvider.selectedDistrict != district ||
+        productProvider.products.isEmpty) {
+      productProvider.loadProductsByLocation(city, district);
+    }
+  }
+
   /// Aktif fiyatı döndürür: Özel fiyat açıksa kullanıcının girdiği fiyat, kapalıysa admin fiyatı
   double get _activePrice {
     if (_useCustomPrice) {
@@ -33,10 +88,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
   @override
   void initState() {
     super.initState();
-    // Default olarak Mersin / Bozyazı fiyatlarını yükle
-    Future.microtask(() {
-      context.read<ProductProvider>().loadProductsByLocation('Mersin', 'Bozyazı');
-    });
+    Future.microtask(_loadProductsForUserLocation);
   }
 
   @override
