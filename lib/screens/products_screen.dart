@@ -23,31 +23,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       final provider = context.read<ProductProvider>();
       
       final initCity = user?.city ?? AppConstants.cities.first;
-      String? initDistrict = user?.district;
-      // Valide district
-      if (initDistrict != null) {
-        final distList = AppConstants.cityDistricts[initCity] ?? [];
-        final normalizedInitDistrict = initDistrict.trim().toLowerCase();
-
-        final caseInsensitiveMatch = distList.where(
-          (district) => district.toLowerCase() == normalizedInitDistrict,
-        );
-
-        if (caseInsensitiveMatch.isNotEmpty) {
-          initDistrict = caseInsensitiveMatch.first;
-        } else if (initCity == 'Mersin' &&
-            (normalizedInitDistrict == 'bozyazı' ||
-                normalizedInitDistrict == 'bozyazi' ||
-                normalizedInitDistrict == 'tekeli') &&
-            distList.contains('Bozyazı/Tekeli')) {
-          initDistrict = 'Bozyazı/Tekeli';
-        } else {
-          initDistrict = distList.isNotEmpty ? distList.first : null;
-        }
-      } else {
-        final distList = AppConstants.cityDistricts[initCity] ?? [];
-        if (distList.isNotEmpty) initDistrict = distList.first;
-      }
+      String? initDistrict = AppConstants.normalizeDistrict(initCity, user?.district);
       
       // Only load if not already loaded or different
       if (provider.selectedCity != initCity || provider.selectedDistrict != initDistrict || provider.products.isEmpty) {
@@ -221,14 +197,39 @@ class _ProductsScreenState extends State<ProductsScreen> {
               child: const Text('İptal'),
             ),
             ElevatedButton(
-              onPressed: () {
-                final newPrice = double.tryParse(priceController.text);
-                if (newPrice != null && newPrice > 0) {
-                  provider.updateProductPrice(product.id, newPrice);
-                  Navigator.pop(context);
-                  
+              onPressed: () async {
+                final rawInput = priceController.text.trim().replaceAll(',', '.');
+                final newPrice = double.tryParse(rawInput);
+
+                if (newPrice == null || newPrice <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${product.name} fiyatı güncellendi ve bu bölge için kaydedildi.')),
+                    const SnackBar(content: Text('Geçerli bir fiyat giriniz.')),
+                  );
+                  return;
+                }
+
+                try {
+                  await provider.updateProductPrice(product.id, newPrice);
+                  if (!mounted) return;
+
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${product.name} fiyatı güncellendi ve ekran yenilendi.',
+                      ),
+                    ),
+                  );
+                } catch (_) {
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        provider.error ?? 'Fiyat güncellenemedi. Lütfen tekrar deneyin.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               },

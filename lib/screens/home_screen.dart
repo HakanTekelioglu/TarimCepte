@@ -9,6 +9,8 @@ import 'harvest_history_screen.dart';
 import 'season_screen.dart';
 import 'settings_screen.dart';
 
+import '../utils/app_constants.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -32,9 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final harvestProvider = context.read<HarvestProvider>();
 
     if (authProvider.currentUser != null) {
-      final userId = authProvider.currentUser!.id;
-      await productProvider.loadProducts();
-      await seasonProvider.loadSeasons(userId);
+      final user = authProvider.currentUser!;
+      final initCity = user.city ?? 'Mersin';
+      final initDistrict = AppConstants.normalizeDistrict(initCity, user.district);
+      
+      await productProvider.loadProductsByLocation(initCity, initDistrict);
+      await seasonProvider.loadSeasons(user.id);
       
       if (seasonProvider.activeSeason != null) {
         await harvestProvider.loadHarvestsBySeason(seasonProvider.activeSeason!.id);

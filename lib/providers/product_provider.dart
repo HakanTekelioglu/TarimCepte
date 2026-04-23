@@ -85,6 +85,8 @@ class ProductProvider extends ChangeNotifier {
 
   /// Ürün fiyatını güncelle
   Future<void> updateProductPrice(String productId, double newPrice) async {
+    _error = null;
+
     if (selectedCity != null) {
       try {
         await _productService.updateProductPriceLocation(
@@ -95,14 +97,31 @@ class ProductProvider extends ChangeNotifier {
           _products[index] = _products[index].copyWith(pricePerKg: newPrice);
           notifyListeners();
         }
+
+        // Sunucudaki güncel lokasyon fiyatlarını yeniden çekerek UI'ı kesin olarak senkronize et.
+        await loadProductsByLocation(selectedCity!, selectedDistrict);
+        if (_error != null) {
+          throw Exception(_error);
+        }
       } catch (e) {
         _error = e.toString();
+        notifyListeners();
+        rethrow;
       }
     } else {
-      final index = _products.indexWhere((p) => p.id == productId);
-      if (index != -1) {
-        final updatedProduct = _products[index].copyWith(pricePerKg: newPrice);
-        await updateProduct(updatedProduct);
+      try {
+        final index = _products.indexWhere((p) => p.id == productId);
+        if (index != -1) {
+          final updatedProduct = _products[index].copyWith(pricePerKg: newPrice);
+          await updateProduct(updatedProduct);
+          if (_error != null) {
+            throw Exception(_error);
+          }
+        }
+      } catch (e) {
+        _error = e.toString();
+        notifyListeners();
+        rethrow;
       }
     }
   }

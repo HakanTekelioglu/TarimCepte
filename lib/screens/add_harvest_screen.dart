@@ -28,62 +28,8 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
     final productProvider = context.read<ProductProvider>();
     final user = authProvider.currentUser;
 
-    const fallbackCity = 'Mersin';
-    const fallbackDistrict = 'Bozyazı/Tekeli';
-
-    final rawCity = user?.city?.trim();
-    final rawDistrict = user?.district?.trim();
-
-    String city;
-    if (rawCity != null && rawCity.isNotEmpty) {
-      city = AppConstants.cities.firstWhere(
-        (c) => c.toLowerCase() == rawCity.toLowerCase(),
-        orElse: () => rawCity,
-      );
-    } else {
-      city = fallbackCity;
-    }
-
-    if (!AppConstants.cityDistricts.containsKey(city)) {
-      city = AppConstants.cityDistricts.containsKey(fallbackCity)
-          ? fallbackCity
-          : AppConstants.cities.first;
-    }
-
-    String? district;
-    final districtList = AppConstants.cityDistricts[city] ?? const <String>[];
-    final hasUserDistrict = rawDistrict != null && rawDistrict.isNotEmpty;
-
-    if (hasUserDistrict) {
-      final normalizedInputDistrict = rawDistrict!.toLowerCase();
-
-      if (city == 'Mersin' &&
-          (normalizedInputDistrict == 'bozyazı' ||
-              normalizedInputDistrict == 'bozyazi' ||
-              normalizedInputDistrict == 'tekeli') &&
-          districtList.contains('Bozyazı/Tekeli')) {
-        district = 'Bozyazı/Tekeli';
-      }
-
-      if (district == null) {
-        for (final candidate in districtList) {
-          if (candidate.toLowerCase() == normalizedInputDistrict) {
-            district = candidate;
-            break;
-          }
-        }
-      }
-    }
-
-    if (district == null) {
-      if (!hasUserDistrict &&
-          city == fallbackCity &&
-          districtList.contains(fallbackDistrict)) {
-        district = fallbackDistrict;
-      } else if (districtList.isNotEmpty) {
-        district = districtList.first;
-      }
-    }
+    final city = user?.city ?? AppConstants.cities.first;
+    final district = AppConstants.normalizeDistrict(city, user?.district);
 
     if (productProvider.selectedCity != city ||
         productProvider.selectedDistrict != district ||
