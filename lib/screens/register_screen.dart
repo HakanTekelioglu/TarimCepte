@@ -42,6 +42,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    final initialDistricts = AppConstants.cityDistricts[_selectedCity] ?? [];
+    _selectedDistrict = initialDistricts.isNotEmpty ? initialDistricts.first : null;
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
@@ -52,6 +59,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedDistrict == null || _selectedDistrict!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen ilçe seçiniz')),
+      );
+      return;
+    }
 
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.register(
@@ -201,6 +214,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixIcon: Icon(Icons.location_city),
                     border: OutlineInputBorder(),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Şehir seçiniz';
+                    }
+                    return null;
+                  },
                   items: AppConstants.cities.map((String c) {
                     return DropdownMenuItem<String>(
                       value: c,
@@ -217,32 +236,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     }
                   },
                 ),
-                
-                if (distList.isNotEmpty)
-                   Padding(
-                     padding: const EdgeInsets.only(top: 16),
-                     child: DropdownButtonFormField<String>(
-                        value: _selectedDistrict,
-                        decoration: const InputDecoration(
-                          labelText: 'İlçe Seçimi',
-                          prefixIcon: Icon(Icons.map),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: distList.map((String d) {
-                          return DropdownMenuItem<String>(
-                            value: d,
-                            child: Text(d),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _selectedDistrict = newValue;
-                            });
-                          }
-                        },
-                      ),
-                   ),
+
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: DropdownButtonFormField<String>(
+                    value: distList.contains(_selectedDistrict) ? _selectedDistrict : null,
+                    decoration: const InputDecoration(
+                      labelText: 'İlçe Seçimi',
+                      prefixIcon: Icon(Icons.map),
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'İlçe seçiniz';
+                      }
+                      return null;
+                    },
+                    items: distList.map((String d) {
+                      return DropdownMenuItem<String>(
+                        value: d,
+                        child: Text(d),
+                      );
+                    }).toList(),
+                    onChanged: distList.isEmpty
+                        ? null
+                        : (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedDistrict = newValue;
+                              });
+                            }
+                          },
+                  ),
+                ),
 
                 const SizedBox(height: 24),
 
