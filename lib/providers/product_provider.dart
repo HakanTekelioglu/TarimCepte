@@ -10,9 +10,10 @@ class ProductProvider extends ChangeNotifier {
   String? _error;
   String? selectedCity;
   String? selectedDistrict;
+  int _locationRequestId = 0;
 
   ProductProvider({IProductService? productService})
-      : _productService = productService ?? LocalProductService();
+    : _productService = productService ?? LocalProductService();
 
   List<ProductModel> get products => _products;
   bool get isLoading => _isLoading;
@@ -41,27 +42,48 @@ class ProductProvider extends ChangeNotifier {
 
   /// Şehir ve ilçeye göre ürünleri yükle
   Future<void> loadProductsByLocation(String city, String? district) async {
+    final requestId = ++_locationRequestId;
     _isLoading = true;
     selectedCity = city;
     selectedDistrict = district;
     notifyListeners();
 
     try {
-      _products = await _productService.getProductsByLocation(city, district);
+      final result = await _productService.getProductsByLocation(
+        city,
+        district,
+      );
+      if (requestId != _locationRequestId) {
+        return;
+      }
+      _products = result;
       _error = null;
     } catch (e) {
+      if (requestId != _locationRequestId) {
+        return;
+      }
       _error = e.toString();
     }
 
+    if (requestId != _locationRequestId) {
+      return;
+    }
     _isLoading = false;
     notifyListeners();
   }
 
   /// Yeni ürün ekle
   Future<void> addProduct(
-      String name, double pricePerKg, String category) async {
+    String name,
+    double pricePerKg,
+    String category,
+  ) async {
     try {
-      final product = await _productService.addProduct(name, pricePerKg, category);
+      final product = await _productService.addProduct(
+        name,
+        pricePerKg,
+        category,
+      );
       _products.add(product);
       notifyListeners();
     } catch (e) {
@@ -90,8 +112,12 @@ class ProductProvider extends ChangeNotifier {
     if (selectedCity != null) {
       try {
         await _productService.updateProductPriceLocation(
-            productId, selectedCity!, selectedDistrict, newPrice);
-            
+          productId,
+          selectedCity!,
+          selectedDistrict,
+          newPrice,
+        );
+
         final index = _products.indexWhere((p) => p.id == productId);
         if (index != -1) {
           _products[index] = _products[index].copyWith(pricePerKg: newPrice);
@@ -112,7 +138,9 @@ class ProductProvider extends ChangeNotifier {
       try {
         final index = _products.indexWhere((p) => p.id == productId);
         if (index != -1) {
-          final updatedProduct = _products[index].copyWith(pricePerKg: newPrice);
+          final updatedProduct = _products[index].copyWith(
+            pricePerKg: newPrice,
+          );
           await updateProduct(updatedProduct);
           if (_error != null) {
             throw Exception(_error);
