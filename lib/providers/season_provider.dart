@@ -50,20 +50,35 @@ class SeasonProvider extends ChangeNotifier {
   Future<void> createSeason(String userId, String name) async {
     try {
       final season = await _seasonService.createSeason(userId, name);
-      
-      // Eski aktif sezonu güncelle
-      if (_activeSeason != null) {
-        final index = _seasons.indexWhere((s) => s.id == _activeSeason!.id);
-        if (index != -1) {
-          _seasons[index] = _seasons[index].copyWith(
-            isActive: false,
-            endDate: DateTime.now(),
-          );
+
+      // Eski aktif sezonu sadece pasifleştir (sonlandırma yok)
+      for (int i = 0; i < _seasons.length; i++) {
+        if (_seasons[i].isActive) {
+          _seasons[i] = _seasons[i].copyWith(isActive: false);
         }
       }
 
       _seasons.insert(0, season);
       _activeSeason = season;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+    }
+  }
+
+  /// Sezonlar arasında geçiş yap
+  Future<void> setActiveSeason(String userId, String seasonId) async {
+    try {
+      await _seasonService.setActiveSeason(userId, seasonId);
+
+      for (int i = 0; i < _seasons.length; i++) {
+        final isSelected = _seasons[i].id == seasonId;
+        _seasons[i] = _seasons[i].copyWith(isActive: isSelected);
+        if (isSelected) {
+          _activeSeason = _seasons[i];
+        }
+      }
+
       notifyListeners();
     } catch (e) {
       _error = e.toString();

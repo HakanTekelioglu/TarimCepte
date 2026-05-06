@@ -11,6 +11,7 @@ abstract class ISeasonService {
   Future<List<SeasonModel>> getSeasonsByUserId(String userId);
   Future<SeasonModel?> getActiveSeasonByUserId(String userId);
   Future<SeasonModel> createSeason(String userId, String name);
+  Future<void> setActiveSeason(String userId, String seasonId);
   Future<void> updateSeason(SeasonModel season);
   Future<void> endSeason(String seasonId);
   Future<void> updateSeasonTotals(String seasonId, double grossEarning,
@@ -58,12 +59,11 @@ class LocalSeasonService implements ISeasonService {
     if (seasonsJson != null) {
       seasons = jsonDecode(seasonsJson);
 
-      // Mevcut aktif sezonları kapat
+      // Mevcut aktif sezonları sadece pasifleştir (sonlandırma yok)
       for (int i = 0; i < seasons.length; i++) {
         final season = seasons[i] as Map<String, dynamic>;
         if (season['userId'] == userId && season['isActive'] == true) {
           season['isActive'] = false;
-          season['endDate'] = DateTime.now().toIso8601String();
         }
       }
     }
@@ -79,6 +79,23 @@ class LocalSeasonService implements ISeasonService {
     await prefs.setString(_seasonsKey, jsonEncode(seasons));
 
     return newSeason;
+  }
+
+  @override
+  Future<void> setActiveSeason(String userId, String seasonId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final seasonsJson = prefs.getString(_seasonsKey);
+
+    if (seasonsJson == null) return;
+
+    final List<dynamic> seasons = jsonDecode(seasonsJson);
+    for (int i = 0; i < seasons.length; i++) {
+      final season = seasons[i] as Map<String, dynamic>;
+      if (season['userId'] != userId || season['endDate'] != null) continue;
+      season['isActive'] = season['id'] == seasonId;
+    }
+
+    await prefs.setString(_seasonsKey, jsonEncode(seasons));
   }
 
   @override
@@ -234,7 +251,6 @@ class SupabaseSeasonService implements ISeasonService {
         .from('seasons')
         .update({
           'is_active': false,
-          'end_date': DateTime.now().toIso8601String(),
         })
         .eq('user_id', userId)
         .eq('is_active', true);
@@ -253,6 +269,22 @@ class SupabaseSeasonService implements ISeasonService {
         .single();
 
     return seasonFromDbMap(response);
+  }
+
+  @override
+  Future<void> setActiveSeason(String userId, String seasonId) async {
+    await _client
+        .from('seasons')
+        .update({'is_active': false})
+        .eq('user_id', userId)
+        .eq('is_active', true);
+
+    await _client
+        .from('seasons')
+        .update({'is_active': true})
+        .eq('id', seasonId)
+        .eq('user_id', userId)
+        .isFilter('end_date', null);
   }
 
   @override

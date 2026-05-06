@@ -75,6 +75,7 @@ class SeasonScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final season = seasons[index];
         final isActive = season.isActive;
+        final isEnded = season.endDate != null;
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -90,7 +91,9 @@ class SeasonScreen extends StatelessWidget {
                 leading: CircleAvatar(
                   backgroundColor: isActive ? Colors.green : Colors.grey[300],
                   child: Icon(
-                    isActive ? Icons.play_arrow : Icons.check,
+                    isActive
+                        ? Icons.play_arrow
+                        : (isEnded ? Icons.check : Icons.swap_horiz),
                     color: isActive ? Colors.white : Colors.grey[600],
                   ),
                 ),
@@ -121,27 +124,44 @@ class SeasonScreen extends StatelessWidget {
                 subtitle: Text(
                   '${dateFormat.format(season.startDate)}${season.endDate != null ? ' - ${dateFormat.format(season.endDate!)}' : ' - Devam ediyor'}',
                 ),
-                trailing: isActive
-                    ? PopupMenuButton(
+                trailing: PopupMenuButton(
                         itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'end',
-                            child: Row(
-                              children: [
-                                Icon(Icons.stop, color: Colors.red),
-                                SizedBox(width: 8),
-                                Text('Sezonu Bitir'),
-                              ],
+                          if (!isActive && !isEnded)
+                            const PopupMenuItem(
+                              value: 'activate',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.play_circle, color: Colors.green),
+                                  SizedBox(width: 8),
+                                  Text('Bu Sezona Geç'),
+                                ],
+                              ),
                             ),
-                          ),
+                          if (!isEnded)
+                            const PopupMenuItem(
+                              value: 'end',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.stop, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text('Sezonu Bitir'),
+                                ],
+                              ),
+                            ),
                         ],
                         onSelected: (value) {
+                          if (value == 'activate') {
+                            final authProvider = context.read<AuthProvider>();
+                            final harvestProvider = context.read<HarvestProvider>();
+                            seasonProvider
+                                .setActiveSeason(authProvider.currentUser!.id, season.id)
+                                .then((_) => harvestProvider.loadHarvestsBySeason(season.id));
+                          }
                           if (value == 'end') {
                             _showEndSeasonDialog(context, season, seasonProvider);
                           }
                         },
-                      )
-                    : null,
+                      ),
               ),
               const Divider(height: 1),
               Padding(
@@ -274,28 +294,6 @@ class SeasonScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (seasonProvider.hasActiveSeason)
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.orange[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning, color: Colors.orange),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Mevcut aktif sezon "${seasonProvider.activeSeason!.name}" sonlandırılacak.',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             TextField(
               controller: controller,
               decoration: const InputDecoration(
@@ -318,7 +316,9 @@ class SeasonScreen extends StatelessWidget {
                   authProvider.currentUser!.id,
                   controller.text,
                 );
-                Navigator.of(context).pop();
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
               }
             },
             child: const Text('Başlat'),
@@ -349,7 +349,9 @@ class SeasonScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               await seasonProvider.endSeason(season.id);
-              Navigator.of(context).pop();
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
