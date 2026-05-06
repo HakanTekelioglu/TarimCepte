@@ -68,8 +68,8 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
   }
 
   double get _calculatedCommission {
-    final authProvider = context.read<AuthProvider>();
-    final rate = authProvider.currentUser?.commissionRate ?? 8.0;
+    final seasonProvider = context.read<SeasonProvider>();
+    final rate = seasonProvider.activeSeason?.commissionRate ?? 8.0;
     return _calculatedGross * (rate / 100);
   }
 
@@ -105,7 +105,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
       crateCount: int.parse(_crateCountController.text),
       totalKg: double.parse(_totalKgController.text),
       pricePerKg: priceToUse,
-      commissionRate: authProvider.currentUser!.commissionRate,
+      commissionRate: seasonProvider.activeSeason!.commissionRate,
       seasonId: seasonProvider.activeSeason!.id,
       notes: _notesController.text.isNotEmpty ? _notesController.text : null,
     );
@@ -385,10 +385,10 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                               'Brüt Kazanç',
                               '₺${_calculatedGross.toPriceString(2)}',
                             ),
-                            Consumer<AuthProvider>(
-                              builder: (context, auth, _) {
+                            Consumer<SeasonProvider>(
+                              builder: (context, season, _) {
                                 return _buildCalculationRow(
-                                  'Komisyon (%${auth.currentUser?.commissionRate.toPriceString(1) ?? '8.0'})',
+                                  'Komisyon (%${season.activeSeason?.commissionRate.toPriceString(1) ?? '8.0'})',
                                   '-₺${_calculatedCommission.toPriceString(2)}',
                                   color: Colors.red,
                                 );
@@ -453,3 +453,4 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
     );
   }
 }
+

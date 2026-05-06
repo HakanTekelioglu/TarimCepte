@@ -72,12 +72,16 @@ create table if not exists public.seasons (
   start_date timestamptz not null,
   end_date timestamptz,
   is_active boolean not null default true,
+  commission_rate double precision not null default 8.0,
   total_gross_earning double precision not null default 0,
   total_commission double precision not null default 0,
   total_net_earning double precision not null default 0,
   total_harvests integer not null default 0,
   total_kg double precision not null default 0
 );
+
+alter table public.seasons
+add column if not exists commission_rate double precision not null default 8.0;
 
 create table if not exists public.harvests (
   id uuid primary key default gen_random_uuid(),

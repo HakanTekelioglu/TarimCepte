@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/formatters.dart';
 import '../providers/providers.dart';
@@ -401,6 +401,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showCreateSeasonDialog() {
     final controller = TextEditingController();
+    final auth = context.read<AuthProvider>();
+    final commissionController = TextEditingController(
+      text: (auth.currentUser?.commissionRate ?? 8.0).toStringAsFixed(1),
+    );
     final now = DateTime.now();
     controller.text = '${now.year} ${_getSeasonName(now.month)}';
 
@@ -408,12 +412,26 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Yeni Sezon Başlat'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Sezon Adı',
-            hintText: 'Örn: 2024 İlkbahar',
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'Sezon Adı',
+                hintText: 'Örn: 2024 İlkbahar',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: commissionController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Sezon Komisyon Oranı (%)',
+                hintText: 'Örn: 8.0',
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -422,12 +440,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (controller.text.isNotEmpty) {
-                final auth = context.read<AuthProvider>();
+              final commissionRate = double.tryParse(commissionController.text);
+              if (controller.text.isNotEmpty &&
+                  commissionRate != null &&
+                  commissionRate >= 0) {
                 final season = context.read<SeasonProvider>();
                 await season.createSeason(
                   auth.currentUser!.id,
                   controller.text,
+                  commissionRate,
                 );
                 if (mounted) {
                   Navigator.of(context).pop();
@@ -449,3 +470,4 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Kış';
   }
 }
+

@@ -10,7 +10,11 @@ import 'supabase_mapper.dart';
 abstract class ISeasonService {
   Future<List<SeasonModel>> getSeasonsByUserId(String userId);
   Future<SeasonModel?> getActiveSeasonByUserId(String userId);
-  Future<SeasonModel> createSeason(String userId, String name);
+  Future<SeasonModel> createSeason(
+    String userId,
+    String name,
+    double commissionRate,
+  );
   Future<void> setActiveSeason(String userId, String seasonId);
   Future<void> updateSeason(SeasonModel season);
   Future<void> endSeason(String seasonId);
@@ -51,7 +55,11 @@ class LocalSeasonService implements ISeasonService {
   }
 
   @override
-  Future<SeasonModel> createSeason(String userId, String name) async {
+  Future<SeasonModel> createSeason(
+    String userId,
+    String name,
+    double commissionRate,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     final seasonsJson = prefs.getString(_seasonsKey);
 
@@ -73,6 +81,7 @@ class LocalSeasonService implements ISeasonService {
       userId: userId,
       name: name,
       startDate: DateTime.now(),
+      commissionRate: commissionRate,
     );
 
     seasons.add(newSeason.toJson());
@@ -246,7 +255,11 @@ class SupabaseSeasonService implements ISeasonService {
   }
 
   @override
-  Future<SeasonModel> createSeason(String userId, String name) async {
+  Future<SeasonModel> createSeason(
+    String userId,
+    String name,
+    double commissionRate,
+  ) async {
     await _client
         .from('seasons')
         .update({
@@ -260,6 +273,7 @@ class SupabaseSeasonService implements ISeasonService {
       userId: userId,
       name: name,
       startDate: DateTime.now(),
+      commissionRate: commissionRate,
     );
 
     final response = await _client

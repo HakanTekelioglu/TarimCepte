@@ -122,7 +122,7 @@ class SeasonScreen extends StatelessWidget {
                   ],
                 ),
                 subtitle: Text(
-                  '${dateFormat.format(season.startDate)}${season.endDate != null ? ' - ${dateFormat.format(season.endDate!)}' : ' - Devam ediyor'}',
+                  '${dateFormat.format(season.startDate)}${season.endDate != null ? ' - ${dateFormat.format(season.endDate!)}' : ' - Devam ediyor'}\nKomisyon: %${season.commissionRate.toPriceString(1)}',
                 ),
                 trailing: PopupMenuButton(
                         itemBuilder: (context) => [
@@ -284,6 +284,9 @@ class SeasonScreen extends StatelessWidget {
     SeasonProvider seasonProvider,
   ) {
     final controller = TextEditingController();
+    final commissionController = TextEditingController(
+      text: (authProvider.currentUser?.commissionRate ?? 8.0).toStringAsFixed(1),
+    );
     final now = DateTime.now();
     controller.text = '${now.year} ${_getSeasonName(now.month)}';
 
@@ -302,6 +305,16 @@ class SeasonScreen extends StatelessWidget {
                 border: OutlineInputBorder(),
               ),
             ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: commissionController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Sezon Komisyon Oranı (%)',
+                hintText: 'Örn: 8.0',
+                border: OutlineInputBorder(),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -311,10 +324,14 @@ class SeasonScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (controller.text.isNotEmpty) {
+              final commissionRate = double.tryParse(commissionController.text);
+              if (controller.text.isNotEmpty &&
+                  commissionRate != null &&
+                  commissionRate >= 0) {
                 await seasonProvider.createSeason(
                   authProvider.currentUser!.id,
                   controller.text,
+                  commissionRate,
                 );
                 if (context.mounted) {
                   Navigator.of(context).pop();

@@ -47,9 +47,17 @@ class SeasonProvider extends ChangeNotifier {
   }
 
   /// Yeni sezon oluştur
-  Future<void> createSeason(String userId, String name) async {
+  Future<void> createSeason(
+    String userId,
+    String name,
+    double commissionRate,
+  ) async {
     try {
-      final season = await _seasonService.createSeason(userId, name);
+      final season = await _seasonService.createSeason(
+        userId,
+        name,
+        commissionRate,
+      );
 
       // Eski aktif sezonu sadece pasifleştir (sonlandırma yok)
       for (int i = 0; i < _seasons.length; i++) {

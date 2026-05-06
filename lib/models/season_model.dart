@@ -6,6 +6,7 @@ class SeasonModel {
   final DateTime startDate;
   final DateTime? endDate;
   final bool isActive;
+  final double commissionRate;
   final double totalGrossEarning;
   final double totalCommission;
   final double totalNetEarning;
@@ -19,6 +20,7 @@ class SeasonModel {
     required this.startDate,
     this.endDate,
     this.isActive = true,
+    this.commissionRate = 8.0,
     this.totalGrossEarning = 0,
     this.totalCommission = 0,
     this.totalNetEarning = 0,
@@ -37,6 +39,7 @@ class SeasonModel {
           ? DateTime.parse(json['endDate'] as String)
           : null,
       isActive: json['isActive'] as bool? ?? true,
+      commissionRate: (json['commissionRate'] as num?)?.toDouble() ?? 8.0,
       totalGrossEarning: (json['totalGrossEarning'] as num?)?.toDouble() ?? 0,
       totalCommission: (json['totalCommission'] as num?)?.toDouble() ?? 0,
       totalNetEarning: (json['totalNetEarning'] as num?)?.toDouble() ?? 0,
@@ -54,6 +57,7 @@ class SeasonModel {
       'startDate': startDate.toIso8601String(),
       'endDate': endDate?.toIso8601String(),
       'isActive': isActive,
+      'commissionRate': commissionRate,
       'totalGrossEarning': totalGrossEarning,
       'totalCommission': totalCommission,
       'totalNetEarning': totalNetEarning,
@@ -70,6 +74,7 @@ class SeasonModel {
     DateTime? startDate,
     DateTime? endDate,
     bool? isActive,
+    double? commissionRate,
     double? totalGrossEarning,
     double? totalCommission,
     double? totalNetEarning,
@@ -83,6 +88,7 @@ class SeasonModel {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       isActive: isActive ?? this.isActive,
+      commissionRate: commissionRate ?? this.commissionRate,
       totalGrossEarning: totalGrossEarning ?? this.totalGrossEarning,
       totalCommission: totalCommission ?? this.totalCommission,
       totalNetEarning: totalNetEarning ?? this.totalNetEarning,
