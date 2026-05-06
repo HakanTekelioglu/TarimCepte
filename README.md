@@ -1,4 +1,4 @@
-# Hal Fiyat - Çiftçi Gelir Takip Uygulaması
+# TarımCepte - Çiftçi Gelir Takip Uygulaması
 
 Hal Fiyat, çiftçilerin seradan topladıkları ürünlerin kazançlarını takip etmelerini sağlayan bir mobil uygulamadır. Hem iOS hem de Android platformlarında çalışır.
 
@@ -26,6 +26,7 @@ Hal Fiyat, çiftçilerin seradan topladıkları ürünlerin kazançlarını taki
 - Sezon bazlı kazanç takibi
 - Geçmiş sezonları görüntüleme
 - Sezon karşılaştırma
+- Sezonlar arası geçiş
 
 ### 🏷️ Ürün Fiyatları
 - Güncel hal fiyatları
@@ -179,4 +180,4 @@ Bu proje MIT lisansı altında lisanslanmıştır.
 
 ---
 
-**Hal Fiyat** - Çiftçiler için geliştirildi 🌾
+**TarımCepte** - Çiftçiler için geliştirildi 🌾

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -29,13 +30,26 @@ class LocalAuthService implements IAuthService {
   static const String _adminInitKey = 'admin_initialized';
   final Uuid _uuid = const Uuid();
 
-  // Admin hesap bilgileri
-  static const String _adminPhone = '+916637289596';
-  static const String _adminPassword = 'admin123';
-  static const String _adminName = 'Admin';
+  String _envOrDefine(String key) {
+    final envValue = dotenv.env[key];
+    if (envValue != null && envValue.isNotEmpty) return envValue;
+    return '';
+  }
+
+  String get _adminPhone => _envOrDefine('LOCAL_ADMIN_PHONE');
+  String get _adminPassword => _envOrDefine('LOCAL_ADMIN_PASSWORD');
+  String get _adminName {
+    final value = _envOrDefine('LOCAL_ADMIN_NAME');
+    return value.isEmpty ? 'Admin' : value;
+  }
 
   /// Admin hesabını oluşturur (uygulama ilk açıldığında)
   Future<void> initializeAdmin() async {
+    if (_adminPhone.isEmpty || _adminPassword.isEmpty) {
+      // Admin bilgileri tanımlı değilse otomatik admin yaratma.
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final isInitialized = prefs.getBool(_adminInitKey) ?? false;
 
