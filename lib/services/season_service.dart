@@ -16,6 +16,7 @@ abstract class ISeasonService {
     double commissionRate,
   );
   Future<void> setActiveSeason(String userId, String seasonId);
+  Future<void> updateSeasonCommissionRate(String seasonId, double commissionRate);
   Future<void> updateSeason(SeasonModel season);
   Future<void> endSeason(String seasonId);
   Future<void> updateSeasonTotals(String seasonId, double grossEarning,
@@ -102,6 +103,28 @@ class LocalSeasonService implements ISeasonService {
       final season = seasons[i] as Map<String, dynamic>;
       if (season['userId'] != userId || season['endDate'] != null) continue;
       season['isActive'] = season['id'] == seasonId;
+    }
+
+    await prefs.setString(_seasonsKey, jsonEncode(seasons));
+  }
+
+  @override
+  Future<void> updateSeasonCommissionRate(
+    String seasonId,
+    double commissionRate,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final seasonsJson = prefs.getString(_seasonsKey);
+
+    if (seasonsJson == null) return;
+
+    final List<dynamic> seasons = jsonDecode(seasonsJson);
+    for (int i = 0; i < seasons.length; i++) {
+      final season = seasons[i] as Map<String, dynamic>;
+      if (season['id'] == seasonId) {
+        season['commissionRate'] = commissionRate;
+        break;
+      }
     }
 
     await prefs.setString(_seasonsKey, jsonEncode(seasons));
@@ -307,6 +330,16 @@ class SupabaseSeasonService implements ISeasonService {
         .from('seasons')
         .update(seasonToDbMap(season))
         .eq('id', season.id);
+  }
+
+  @override
+  Future<void> updateSeasonCommissionRate(
+    String seasonId,
+    double commissionRate,
+  ) async {
+    await _client.from('seasons').update({
+      'commission_rate': commissionRate,
+    }).eq('id', seasonId);
   }
 
   @override

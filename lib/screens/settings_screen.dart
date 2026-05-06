@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 
@@ -27,21 +27,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
+  Future<void> _saveCommission(double rate) async {
+    final authProvider = context.read<AuthProvider>();
+    final seasonProvider = context.read<SeasonProvider>();
+
+    await authProvider.updateCommissionRate(rate);
+    final seasonUpdated =
+        await seasonProvider.updateActiveSeasonCommissionRate(rate);
+
+    if (!mounted) return;
+    if (seasonUpdated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            seasonProvider.activeSeason == null
+                ? 'Varsayılan komisyon oranı güncellendi.'
+                : 'Varsayılan ve aktif sezon komisyon oranı güncellendi.',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Kullanıcı komisyonu güncellendi, sezon güncellenemedi. Supabase seasons tablosuna commission_rate kolonu eklenmeli.',
+        ),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ayarlar'),
       ),
-      body: Consumer<AuthProvider>(
-        builder: (context, authProvider, _) {
+      body: Consumer2<AuthProvider, SeasonProvider>(
+        builder: (context, authProvider, seasonProvider, _) {
           final user = authProvider.currentUser;
           if (user == null) return const SizedBox.shrink();
+
+          final activeSeason = seasonProvider.activeSeason;
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Profil Bilgileri
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -69,19 +103,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       if (user.isAdmin)
                         ListTile(
-                          leading: const Icon(Icons.admin_panel_settings, color: Colors.orange),
+                          leading: const Icon(
+                            Icons.admin_panel_settings,
+                            color: Colors.orange,
+                          ),
                           title: const Text('Yetki'),
                           subtitle: const Text('Admin'),
                           contentPadding: EdgeInsets.zero,
                           trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.orange,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Text(
-                              'ADMİN',
-                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              'ADMIN',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -90,8 +134,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Komisyon Ayarları
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -106,18 +148,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Komisyoncunuzun uyguladığı kesinti oranını buradan ayarlayabilirsiniz.',
+                        'Kaydet dediğinizde oran hem varsayılan kullanıcı ayarına hem de aktif sezona uygulanır.',
                         style: TextStyle(color: Colors.grey),
                       ),
+                      if (activeSeason != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Aktif Sezon: ${activeSeason.name} (%${activeSeason.commissionRate.toStringAsFixed(1)})',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: _commissionController,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
                               decoration: const InputDecoration(
                                 labelText: 'Komisyon Oranı',
                                 suffixText: '%',
@@ -127,22 +176,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           const SizedBox(width: 12),
                           ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               final rate =
                                   double.tryParse(_commissionController.text);
                               if (rate != null && rate >= 0 && rate <= 100) {
-                                authProvider.updateCommissionRate(rate);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Komisyon oranı güncellendi'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
+                                await _saveCommission(rate);
                               } else {
+                                if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
-                                        'Geçerli bir oran giriniz (0-100)'),
+                                      'Geçerli bir oran giriniz (0-100)',
+                                    ),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
@@ -153,8 +198,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-
-                      // Hızlı Seçim Butonları
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -163,11 +206,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           return ChoiceChip(
                             label: Text('%$rate'),
                             selected: isSelected,
-                            onSelected: (selected) {
+                            onSelected: (selected) async {
                               if (selected) {
                                 _commissionController.text =
                                     rate.toStringAsFixed(1);
-                                authProvider.updateCommissionRate(rate);
+                                await _saveCommission(rate);
                               }
                             },
                           );
@@ -178,8 +221,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Uygulama Hakkında
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -203,8 +244,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         leading: Icon(Icons.agriculture),
                         title: Text('Hal Fiyat'),
                         subtitle: Text(
-                          'Çiftçiler için gelir takip uygulaması. '
-                          'Hasatlarınızı kaydedin, kazançlarınızı takip edin.',
+                          'Çiftçiler için gelir takip uygulaması. Hasatlarınızı kaydedin, kazançlarınızı takip edin.',
                         ),
                         contentPadding: EdgeInsets.zero,
                       ),

@@ -130,6 +130,27 @@ class SeasonProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Aktif sezonun komisyon oranını güncelle
+  Future<bool> updateActiveSeasonCommissionRate(double rate) async {
+    if (_activeSeason == null) return true;
+
+    try {
+      await _seasonService.updateSeasonCommissionRate(_activeSeason!.id, rate);
+      _activeSeason = _activeSeason!.copyWith(commissionRate: rate);
+
+      final index = _seasons.indexWhere((s) => s.id == _activeSeason!.id);
+      if (index != -1) {
+        _seasons[index] = _activeSeason!;
+      }
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      return false;
+    }
+  }
+
   /// Sezon detayını getir
   SeasonModel? getSeasonById(String id) {
     try {
