@@ -68,13 +68,13 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await context.read<AuthProvider>().logout();
-              if (mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
+              final authProvider = context.read<AuthProvider>();
+              await authProvider.logout();
+              if (!context.mounted) return;
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                (route) => false,
+              );
             },
           ),
         ],
@@ -450,10 +450,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller.text,
                   commissionRate,
                 );
-                if (mounted) {
-                  Navigator.of(context).pop();
-                  _loadData();
-                }
+                if (!context.mounted) return;
+                Navigator.of(context).pop();
+                _loadData();
               }
             },
             child: const Text('Başlat'),

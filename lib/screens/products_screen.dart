@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/formatters.dart';
 import '../providers/providers.dart';
@@ -21,13 +21,17 @@ class _ProductsScreenState extends State<ProductsScreen> {
     if (!_initialized) {
       final user = context.read<AuthProvider>().currentUser;
       final provider = context.read<ProductProvider>();
-      
+
       final initCity = user?.city ?? AppConstants.cities.first;
-      String? initDistrict = AppConstants.normalizeDistrict(initCity, user?.district);
-      
-      // Only load if not already loaded or different
-      if (provider.selectedCity != initCity || provider.selectedDistrict != initDistrict || provider.products.isEmpty) {
-        Future.microtask(() => provider.loadProductsByLocation(initCity, initDistrict));
+      String? initDistrict =
+          AppConstants.normalizeDistrict(initCity, user?.district);
+
+      if (provider.selectedCity != initCity ||
+          provider.selectedDistrict != initDistrict ||
+          provider.products.isEmpty) {
+        Future.microtask(
+          () => provider.loadProductsByLocation(initCity, initDistrict),
+        );
       }
       _initialized = true;
     }
@@ -45,7 +49,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
         final currentCity = productProvider.selectedCity!;
         final currentDistrict = productProvider.selectedDistrict;
-        
+
         final districtList = AppConstants.cityDistricts[currentCity] ?? [];
 
         final products = productProvider.products;
@@ -56,9 +60,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
           length: 3,
           child: Column(
             children: [
-              // Location Filter
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Row(
                   children: [
                     Expanded(
@@ -73,12 +77,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         }).toList(),
                         onChanged: (String? newValue) {
                           if (newValue != null) {
-                            String? newDist = null;
-                            final dList = AppConstants.cityDistricts[newValue] ?? [];
+                            String? newDist;
+                            final dList =
+                                AppConstants.cityDistricts[newValue] ?? [];
                             if (dList.isNotEmpty) {
                               newDist = dList.first;
                             }
-                            productProvider.loadProductsByLocation(newValue, newDist);
+                            productProvider.loadProductsByLocation(
+                              newValue,
+                              newDist,
+                            );
                           }
                         },
                       ),
@@ -87,7 +95,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     if (districtList.isNotEmpty)
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: districtList.contains(currentDistrict) ? currentDistrict : null,
+                          value: districtList.contains(currentDistrict)
+                              ? currentDistrict
+                              : null,
                           decoration: const InputDecoration(labelText: 'İlçe'),
                           items: districtList.map((String d) {
                             return DropdownMenuItem<String>(
@@ -97,7 +107,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           }).toList(),
                           onChanged: (String? newValue) {
                             if (newValue != null) {
-                              productProvider.loadProductsByLocation(currentCity, newValue);
+                              productProvider.loadProductsByLocation(
+                                currentCity,
+                                newValue,
+                              );
                             }
                           },
                         ),
@@ -116,7 +129,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 child: TabBarView(
                   children: [
                     _buildProductList(context, products, isAdmin, productProvider),
-                    _buildProductList(context, vegetables, isAdmin, productProvider),
+                    _buildProductList(
+                      context,
+                      vegetables,
+                      isAdmin,
+                      productProvider,
+                    ),
                     _buildProductList(context, fruits, isAdmin, productProvider),
                   ],
                 ),
@@ -128,9 +146,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
-  Widget _buildProductList(BuildContext context, List<ProductModel> products, bool isAdmin, ProductProvider productProvider) {
+  Widget _buildProductList(
+    BuildContext context,
+    List<ProductModel> products,
+    bool isAdmin,
+    ProductProvider productProvider,
+  ) {
     if (productProvider.error != null) {
-      return Center(child: Text('Hata: ${productProvider.error}', style: const TextStyle(color: Colors.red)));
+      return Center(
+        child: Text(
+          'Hata: ${productProvider.error}',
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
     }
     if (products.isEmpty) {
       return const Center(child: Text('Bu bölgede ürün bulunamadı.'));
@@ -150,7 +178,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
               children: [
                 Text(
                   '${product.pricePerKg.toPriceString(2)} ₺/kg',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 if (isAdmin)
                   IconButton(
@@ -166,7 +197,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   void _showEditPriceDialog(BuildContext context, ProductModel product) {
-    final priceController = TextEditingController(text: product.pricePerKg.toString());
+    final priceController =
+        TextEditingController(text: product.pricePerKg.toString());
     final provider = context.read<ProductProvider>();
 
     showDialog(
@@ -178,12 +210,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Lokasyon: ${provider.selectedCity} / ${provider.selectedDistrict ?? '-'}', 
-                   style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              Text(
+                'Lokasyon: ${provider.selectedCity} / ${provider.selectedDistrict ?? '-'}',
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
               const SizedBox(height: 10),
               TextField(
                 controller: priceController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
                   labelText: 'Fiyat (₺)',
                   suffixText: '₺',
@@ -200,9 +235,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
               onPressed: () async {
                 final rawInput = priceController.text.trim().replaceAll(',', '.');
                 final newPrice = double.tryParse(rawInput);
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
 
                 if (newPrice == null || newPrice <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     const SnackBar(content: Text('Geçerli bir fiyat giriniz.')),
                   );
                   return;
@@ -210,10 +247,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
                 try {
                   await provider.updateProductPrice(product.id, newPrice);
-                  if (!mounted) return;
+                  if (!context.mounted) return;
 
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  navigator.pop();
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text(
                         '${product.name} fiyatı güncellendi ve ekran yenilendi.',
@@ -221,12 +258,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ),
                   );
                 } catch (_) {
-                  if (!mounted) return;
+                  if (!context.mounted) return;
 
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(
                       content: Text(
-                        provider.error ?? 'Fiyat güncellenemedi. Lütfen tekrar deneyin.',
+                        provider.error ??
+                            'Fiyat güncellenemedi. Lütfen tekrar deneyin.',
                       ),
                       backgroundColor: Colors.red,
                     ),

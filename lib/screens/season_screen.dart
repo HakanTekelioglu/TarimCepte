@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../utils/formatters.dart';
@@ -125,43 +125,45 @@ class SeasonScreen extends StatelessWidget {
                   '${dateFormat.format(season.startDate)}${season.endDate != null ? ' - ${dateFormat.format(season.endDate!)}' : ' - Devam ediyor'}\nKomisyon: %${season.commissionRate.toPriceString(1)}',
                 ),
                 trailing: PopupMenuButton(
-                        itemBuilder: (context) => [
-                          if (!isActive && !isEnded)
-                            const PopupMenuItem(
-                              value: 'activate',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.play_circle, color: Colors.green),
-                                  SizedBox(width: 8),
-                                  Text('Bu Sezona Geç'),
-                                ],
-                              ),
-                            ),
-                          if (!isEnded)
-                            const PopupMenuItem(
-                              value: 'end',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.stop, color: Colors.red),
-                                  SizedBox(width: 8),
-                                  Text('Sezonu Bitir'),
-                                ],
-                              ),
-                            ),
-                        ],
-                        onSelected: (value) {
-                          if (value == 'activate') {
-                            final authProvider = context.read<AuthProvider>();
-                            final harvestProvider = context.read<HarvestProvider>();
-                            seasonProvider
-                                .setActiveSeason(authProvider.currentUser!.id, season.id)
-                                .then((_) => harvestProvider.loadHarvestsBySeason(season.id));
-                          }
-                          if (value == 'end') {
-                            _showEndSeasonDialog(context, season, seasonProvider);
-                          }
-                        },
+                  itemBuilder: (context) => [
+                    if (!isActive && !isEnded)
+                      const PopupMenuItem(
+                        value: 'activate',
+                        child: Row(
+                          children: [
+                            Icon(Icons.play_circle, color: Colors.green),
+                            SizedBox(width: 8),
+                            Text('Bu Sezona Geç'),
+                          ],
+                        ),
                       ),
+                    if (!isEnded)
+                      const PopupMenuItem(
+                        value: 'end',
+                        child: Row(
+                          children: [
+                            Icon(Icons.stop, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Sezonu Bitir'),
+                          ],
+                        ),
+                      ),
+                  ],
+                  onSelected: (value) {
+                    if (value == 'activate') {
+                      final authProvider = context.read<AuthProvider>();
+                      final harvestProvider = context.read<HarvestProvider>();
+                      seasonProvider
+                          .setActiveSeason(authProvider.currentUser!.id, season.id)
+                          .then(
+                            (_) => harvestProvider.loadHarvestsBySeason(season.id),
+                          );
+                    }
+                    if (value == 'end') {
+                      _showEndSeasonDialog(context, season, seasonProvider);
+                    }
+                  },
+                ),
               ),
               const Divider(height: 1),
               Padding(
@@ -213,7 +215,7 @@ class SeasonScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -229,7 +231,6 @@ class SeasonScreen extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              //color: Theme.of(context).primaryColor,
                               color: Colors.lightGreen[700],
                             ),
                           ),
