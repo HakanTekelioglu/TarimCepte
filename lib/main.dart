@@ -19,8 +19,10 @@ void main() async {
   }
 
   final supabaseUrl =
-      dotenv.env['SUPABASE_URL'] ?? const String.fromEnvironment('SUPABASE_URL');
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ??
+      dotenv.env['SUPABASE_URL'] ??
+      const String.fromEnvironment('SUPABASE_URL');
+  final supabaseAnonKey =
+      dotenv.env['SUPABASE_ANON_KEY'] ??
       const String.fromEnvironment('SUPABASE_ANON_KEY');
 
   if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
@@ -29,14 +31,13 @@ void main() async {
     );
   }
 
-  await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseAnonKey,
-  );
-  
-  
-  await initializeDateFormatting('tr_TR', null);  // Türkçe tarih formatı için locale başlatır
-  
+  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+
+  await initializeDateFormatting(
+    'tr_TR',
+    null,
+  ); // Türkçe tarih formatı için locale başlatır
+
   runApp(const HalFiyatApp());
 }
 
@@ -59,10 +60,11 @@ class HalFiyatApp extends StatelessWidget {
           create: (_) => ProductProvider(productService: _productService),
         ),
         ChangeNotifierProvider(
-          create: (_) => HarvestProvider(
-            harvestService: _harvestService,
-            seasonService: _seasonService,
-          ),
+          create:
+              (_) => HarvestProvider(
+                harvestService: _harvestService,
+                seasonService: _seasonService,
+              ),
         ),
         ChangeNotifierProvider(
           create: (_) => SeasonProvider(seasonService: _seasonService),
@@ -94,7 +96,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    _checkAuth();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuth();
+    });
   }
 
   Future<void> _checkAuth() async {
@@ -113,11 +117,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.agriculture,
-                size: 80,
-                color: Color(0xFF2E7D32),
-              ),
+              Icon(Icons.agriculture, size: 80, color: Color(0xFF2E7D32)),
               SizedBox(height: 24),
               CircularProgressIndicator(),
               SizedBox(height: 16),

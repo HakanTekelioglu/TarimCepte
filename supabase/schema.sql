@@ -42,23 +42,34 @@ create extension if not exists "pgcrypto";
 create table if not exists public.users (
   id uuid primary key default gen_random_uuid(),
   phone_number text not null unique,
-  password text not null,
+  password text,
   full_name text not null,
   commission_rate double precision not null default 8.0,
   is_admin boolean not null default false,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  auth_migrated_at timestamptz
 );
 
 alter table public.users drop constraint if exists users_id_fkey;
 alter table public.users alter column id set default gen_random_uuid();
 alter table public.users add column if not exists password text;
+alter table public.users alter column password drop not null;
 alter table public.users add column if not exists phone_number text;
 alter table public.users alter column phone_number set not null;
+alter table public.users add column if not exists auth_migrated_at timestamptz;
 create unique index if not exists users_phone_number_key on public.users(phone_number);
 
 update public.users
 set password = coalesce(password, '123456')
 where password is null;
+
+alter table public.users
+  drop constraint if exists users_id_auth_fkey;
+
+alter table public.users
+  add constraint users_id_auth_fkey
+  foreign key (id) references auth.users(id) on delete cascade
+  not valid;
 
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),

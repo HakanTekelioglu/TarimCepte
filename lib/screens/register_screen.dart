@@ -19,7 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  
+
   String _selectedCity = AppConstants.cities.first;
   String? _selectedDistrict;
 
@@ -35,7 +35,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     if (cleaned.startsWith('0')) {
-      return '+9${cleaned.substring(1)}';
+      return '+90${cleaned.substring(1)}';
     }
 
     return '+90$cleaned';
@@ -45,7 +45,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void initState() {
     super.initState();
     final initialDistricts = AppConstants.cityDistricts[_selectedCity] ?? [];
-    _selectedDistrict = initialDistricts.isNotEmpty ? initialDistricts.first : null;
+    _selectedDistrict =
+        initialDistricts.isNotEmpty ? initialDistricts.first : null;
   }
 
   @override
@@ -60,9 +61,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDistrict == null || _selectedDistrict!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen ilçe seçiniz')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lütfen ilçe seçiniz')));
       return;
     }
 
@@ -86,11 +87,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final distList = AppConstants.cityDistricts[_selectedCity] ?? [];
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kayıt Ol'),
-      ),
+      appBar: AppBar(title: const Text('Kayıt Ol')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -190,7 +189,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       onPressed: () {
                         setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;   
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
                         });
                       },
                     ),
@@ -206,7 +205,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 DropdownButtonFormField<String>(
                   value: _selectedCity,
                   decoration: const InputDecoration(
@@ -220,18 +219,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     }
                     return null;
                   },
-                  items: AppConstants.cities.map((String c) {
-                    return DropdownMenuItem<String>(
-                      value: c,
-                      child: Text(c),
-                    );
-                  }).toList(),
+                  items:
+                      AppConstants.cities.map((String c) {
+                        return DropdownMenuItem<String>(
+                          value: c,
+                          child: Text(c),
+                        );
+                      }).toList(),
                   onChanged: (String? newValue) {
                     if (newValue != null) {
                       setState(() {
                         _selectedCity = newValue;
-                        final dList = AppConstants.cityDistricts[newValue] ?? [];
-                        _selectedDistrict = dList.isNotEmpty ? dList.first : null;
+                        final dList =
+                            AppConstants.cityDistricts[newValue] ?? [];
+                        _selectedDistrict =
+                            dList.isNotEmpty ? dList.first : null;
                       });
                     }
                   },
@@ -240,7 +242,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: DropdownButtonFormField<String>(
-                    value: distList.contains(_selectedDistrict) ? _selectedDistrict : null,
+                    value:
+                        distList.contains(_selectedDistrict)
+                            ? _selectedDistrict
+                            : null,
                     decoration: const InputDecoration(
                       labelText: 'İlçe Seçimi',
                       prefixIcon: Icon(Icons.map),
@@ -252,21 +257,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }
                       return null;
                     },
-                    items: distList.map((String d) {
-                      return DropdownMenuItem<String>(
-                        value: d,
-                        child: Text(d),
-                      );
-                    }).toList(),
-                    onChanged: distList.isEmpty
-                        ? null
-                        : (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                _selectedDistrict = newValue;
-                              });
-                            }
-                          },
+                    items:
+                        distList.map((String d) {
+                          return DropdownMenuItem<String>(
+                            value: d,
+                            child: Text(d),
+                          );
+                        }).toList(),
+                    onChanged:
+                        distList.isEmpty
+                            ? null
+                            : (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  _selectedDistrict = newValue;
+                                });
+                              }
+                            },
                   ),
                 ),
 
@@ -293,20 +300,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Consumer<AuthProvider>(
                   builder: (context, auth, _) {
                     return ElevatedButton(
-                      onPressed: auth.isLoading ? null : _handleRegister,       
+                      onPressed: auth.isLoading ? null : _handleRegister,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),      
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: auth.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2), 
-                            )
-                          : const Text(
-                              'Kayıt Ol',
-                              style: TextStyle(fontSize: 16),
-                            ),
+                      child:
+                          auth.isLoading
+                              ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : const Text(
+                                'Kayıt Ol',
+                                style: TextStyle(fontSize: 16),
+                              ),
                     );
                   },
                 ),

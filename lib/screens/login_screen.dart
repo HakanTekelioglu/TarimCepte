@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (cleaned.startsWith('0')) {
-      return '+9${cleaned.substring(1)}';
+      return '+90${cleaned.substring(1)}';
     }
 
     return '+90$cleaned';

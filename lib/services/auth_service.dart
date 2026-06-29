@@ -61,8 +61,9 @@ class LocalAuthService implements IAuthService {
       }
 
       // Admin hesabı var mı kontrol ediyor
-        bool adminExists = users.any((u) =>
-          (u as Map<String, dynamic>)['phoneNumber'] == _adminPhone);
+      bool adminExists = users.any(
+        (u) => (u as Map<String, dynamic>)['phoneNumber'] == _adminPhone,
+      );
 
       if (!adminExists) {
         final adminUser = UserModel(
@@ -98,9 +99,9 @@ class LocalAuthService implements IAuthService {
     final List<dynamic> users = jsonDecode(usersJson);
     for (var userJson in users) {
       final user = userJson as Map<String, dynamic>;
-      if (user['phoneNumber'] == phoneNumber && user['password'] == password) { 
+      if (user['phoneNumber'] == phoneNumber && user['password'] == password) {
         final userModel = UserModel.fromJson(user);
-        await prefs.setString(_userKey, jsonEncode(userModel.toJson()));        
+        await prefs.setString(_userKey, jsonEncode(userModel.toJson()));
         return userModel;
       }
     }
@@ -109,7 +110,12 @@ class LocalAuthService implements IAuthService {
 
   @override
   Future<UserModel?> register(
-      String phoneNumber, String password, String fullName, {String? city, String? district}) async {
+    String phoneNumber,
+    String password,
+    String fullName, {
+    String? city,
+    String? district,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     final usersJson = prefs.getString(_usersKey);
 
@@ -118,7 +124,7 @@ class LocalAuthService implements IAuthService {
       users = jsonDecode(usersJson);
       // Telefon numarası kontrolü
       for (var user in users) {
-        if ((user as Map<String, dynamic>)['phoneNumber'] == phoneNumber) {     
+        if ((user as Map<String, dynamic>)['phoneNumber'] == phoneNumber) {
           throw Exception('Bu telefon numarası zaten kullanılıyor');
         }
       }
@@ -134,7 +140,8 @@ class LocalAuthService implements IAuthService {
     );
 
     final userJson = newUser.toJson();
-    userJson['password'] = password; // Şifre sakla (gerçek uygulamada hash'lenmeli)
+    userJson['password'] =
+        password; // Şifre sakla (gerçek uygulamada hash'lenmeli)
     users.add(userJson);
 
     await prefs.setString(_usersKey, jsonEncode(users));
@@ -191,16 +198,83 @@ class SupabaseAuthService implements IAuthService {
   static const String _sessionUserIdKey = 'supabase_session_user_id';
 
   SupabaseAuthService({SupabaseClient? client})
-      : _client = client ?? Supabase.instance.client;
+    : _client = client ?? Supabase.instance.client;
+
+  String _normalizePhoneNumber(String phoneNumber) {
+    var digits = phoneNumber.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.startsWith('00')) {
+      digits = digits.substring(2);
+    }
+
+    if (digits.startsWith('90') && digits.length == 12) {
+      return '+$digits';
+    }
+
+    if (digits.startsWith('9') && digits.length == 12) {
+      return '+90${digits.substring(1)}';
+    }
+
+    if (digits.startsWith('0') && digits.length == 11) {
+      return '+90${digits.substring(1)}';
+    }
+
+    if (digits.length == 10) {
+      return '+90$digits';
+    }
+
+    return phoneNumber.trim();
+  }
+
+  Future<Map<String, dynamic>?> _findProfileByPhone(String phoneNumber) async {
+    final normalizedPhone = _normalizePhoneNumber(phoneNumber);
+
+    final normalizedProfile =
+        await _client
+            .from('users')
+            .select()
+            .eq('phone_number', normalizedPhone)
+            .maybeSingle();
+
+    if (normalizedProfile != null || normalizedPhone == phoneNumber.trim()) {
+      return normalizedProfile;
+    }
+
+    return _client
+        .from('users')
+        .select()
+        .eq('phone_number', phoneNumber.trim())
+        .maybeSingle();
+  }
 
   @override
   Future<UserModel?> login(String phoneNumber, String password) async {
-    final profile = await _client
-        .from('users')
-        .select()
-        .eq('phone_number', phoneNumber)
-        .eq('password', password)
-        .maybeSingle();
+    late final AuthResponse authResponse;
+    try {
+      authResponse = await _client.auth.signInWithPassword(
+        phone: _normalizePhoneNumber(phoneNumber),
+        password: password,
+      );
+    } on AuthException catch (e) {
+      final errorText = e.toString().toLowerCase();
+      if (errorText.contains('phone_not_confirmed') ||
+          errorText.contains('phone not confirmed')) {
+        throw Exception(
+          'Telefon dogrulanmamis. Supabase Authentication ayarlarinda Phone confirmation kapali olmali ya da SMS dogrulama tamamlanmali.',
+        );
+      }
+      rethrow;
+    }
+    final authUser = authResponse.user;
+
+    if (authUser == null) return null;
+
+    final profile =
+        await _client
+            .from('users')
+            .select()
+            .eq('id', authUser.id)
+            .maybeSingle();
 
     if (profile == null) return null;
 
@@ -218,33 +292,54 @@ class SupabaseAuthService implements IAuthService {
     String? city,
     String? district,
   }) async {
-    final existingUser = await _client
-        .from('users')
-        .select('id')
-        .eq('phone_number', phoneNumber)
-        .maybeSingle();
+    final normalizedPhone = _normalizePhoneNumber(phoneNumber);
+    final existingUser = await _findProfileByPhone(phoneNumber);
 
     if (existingUser != null) {
       throw Exception('Bu telefon numarası zaten kullanılıyor.');
     }
 
-    final createdUser = await _client
-        .from('users')
-        .insert({
-          'phone_number': phoneNumber,
-          'password': password,
-          'full_name': fullName,
-          'commission_rate': 8.0,
-          'is_admin': false,
-          'created_at': DateTime.now().toIso8601String(),
-          'city': city,
-          'district': district,
-        })
-        .select()
-        .single();
+    late final AuthResponse authResponse;
+    try {
+      authResponse = await _client.auth.signUp(
+        phone: normalizedPhone,
+        password: password,
+        data: {'full_name': fullName, 'name': fullName},
+      );
+    } on AuthException catch (e) {
+      final errorText = e.toString().toLowerCase();
+      if (errorText.contains('phone_provider_disabled')) {
+        throw Exception(
+          'Supabase Phone provider kapali. Authentication > Providers > Phone ayarini acmalisiniz.',
+        );
+      }
+      rethrow;
+    }
+    final authUser = authResponse.user;
+
+    if (authUser == null) {
+      throw Exception('Kullanici olusturulamadi.');
+    }
+
+    final createdUser =
+        await _client
+            .from('users')
+            .insert({
+              'id': authUser.id,
+              'phone_number': normalizedPhone,
+              'password': password,
+              'full_name': fullName,
+              'commission_rate': 8.0,
+              'is_admin': false,
+              'created_at': DateTime.now().toIso8601String(),
+              'city': city,
+              'district': district,
+            })
+            .select()
+            .single();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_sessionUserIdKey, createdUser['id'] as String);      
+    await prefs.setString(_sessionUserIdKey, createdUser['id'] as String);
 
     return userFromDbMap(createdUser);
   }
@@ -253,19 +348,18 @@ class SupabaseAuthService implements IAuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_sessionUserIdKey);
+    await _client.auth.signOut();
   }
 
   @override
   Future<UserModel?> getCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString(_sessionUserIdKey);
+    final userId =
+        _client.auth.currentUser?.id ?? prefs.getString(_sessionUserIdKey);
     if (userId == null) return null;
 
-    final profile = await _client
-        .from('users')
-        .select()
-        .eq('id', userId)
-        .maybeSingle();
+    final profile =
+        await _client.from('users').select().eq('id', userId).maybeSingle();
 
     if (profile == null) {
       await prefs.remove(_sessionUserIdKey);
