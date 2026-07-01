@@ -226,44 +226,93 @@ class SupabaseAuthService implements IAuthService {
     return phoneNumber.trim();
   }
 
-  Future<Map<String, dynamic>?> _findProfileByPhone(String phoneNumber) async {
-    final normalizedPhone = _normalizePhoneNumber(phoneNumber);
+  List<String> _phoneLookupCandidates(String phoneNumber) {
+    final candidates = <String>{};
+    final trimmed = phoneNumber.trim();
+    final normalized = _normalizePhoneNumber(trimmed);
+    final digits = trimmed.replaceAll(RegExp(r'\D'), '');
 
-    final normalizedProfile =
-        await _client
-            .from('users')
-            .select()
-            .eq('phone_number', normalizedPhone)
-            .maybeSingle();
-
-    if (normalizedProfile != null || normalizedPhone == phoneNumber.trim()) {
-      return normalizedProfile;
+    void add(String value) {
+      if (value.trim().isNotEmpty) {
+        candidates.add(value.trim());
+      }
     }
 
-    return _client
-        .from('users')
-        .select()
-        .eq('phone_number', phoneNumber.trim())
-        .maybeSingle();
+    add(normalized);
+    add(trimmed);
+
+    var plainDigits = digits;
+    if (plainDigits.startsWith('00')) {
+      plainDigits = plainDigits.substring(2);
+    }
+
+    if (plainDigits.startsWith('90') && plainDigits.length == 12) {
+      final local = plainDigits.substring(2);
+      add('+90$local');
+      add('+9$local');
+    } else if (plainDigits.startsWith('0') && plainDigits.length == 11) {
+      final local = plainDigits.substring(1);
+      add('+90$local');
+      add('+9$local');
+    } else if (plainDigits.length == 10) {
+      add('+90$plainDigits');
+      add('+9$plainDigits');
+    } else if (plainDigits.startsWith('9') && plainDigits.length == 11) {
+      final local = plainDigits.substring(1);
+      add('+$plainDigits');
+      add('+90$local');
+      add('+9$local');
+    }
+
+    return candidates.toList();
+  }
+
+  Future<Map<String, dynamic>?> _findProfileByPhone(String phoneNumber) async {
+    for (final candidate in _phoneLookupCandidates(phoneNumber)) {
+      final profile =
+          await _client
+              .from('users')
+              .select()
+              .eq('phone_number', candidate)
+              .maybeSingle();
+
+      if (profile != null) {
+        return profile;
+      }
+    }
+
+    return null;
   }
 
   @override
   Future<UserModel?> login(String phoneNumber, String password) async {
-    late final AuthResponse authResponse;
-    try {
-      authResponse = await _client.auth.signInWithPassword(
-        phone: _normalizePhoneNumber(phoneNumber),
-        password: password,
-      );
-    } on AuthException catch (e) {
-      final errorText = e.toString().toLowerCase();
-      if (errorText.contains('phone_not_confirmed') ||
-          errorText.contains('phone not confirmed')) {
-        throw Exception(
-          'Telefon dogrulanmamis. Supabase Authentication ayarlarinda Phone confirmation kapali olmali ya da SMS dogrulama tamamlanmali.',
+    AuthResponse? authResponse;
+    AuthException? lastAuthException;
+
+    for (final candidate in _phoneLookupCandidates(phoneNumber)) {
+      try {
+        authResponse = await _client.auth.signInWithPassword(
+          phone: candidate,
+          password: password,
         );
+        break;
+      } on AuthException catch (e) {
+        lastAuthException = e;
+        final errorText = e.toString().toLowerCase();
+        if (errorText.contains('phone_not_confirmed') ||
+            errorText.contains('phone not confirmed')) {
+          throw Exception(
+            'Telefon dogrulanmamis. Supabase Authentication ayarlarinda Phone confirmation kapali olmali ya da SMS dogrulama tamamlanmali.',
+          );
+        }
       }
-      rethrow;
+    }
+
+    if (authResponse == null) {
+      if (lastAuthException != null) {
+        throw lastAuthException;
+      }
+      return null;
     }
     final authUser = authResponse.user;
 
