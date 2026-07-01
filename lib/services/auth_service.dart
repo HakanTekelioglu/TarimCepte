@@ -14,11 +14,15 @@ abstract class IAuthService {
     String phoneNumber,
     String password,
     String fullName, {
+    String? email,
     String? city,
     String? district,
   });
   Future<void> logout();
   Future<UserModel?> getCurrentUser();
+  Future<void> sendPasswordResetEmail(String email);
+  Future<void> verifyPasswordResetCode(String email, String code);
+  Future<void> updatePassword(String newPassword);
   Future<void> updateCommissionRate(double rate);
 }
 
@@ -113,6 +117,7 @@ class LocalAuthService implements IAuthService {
     String phoneNumber,
     String password,
     String fullName, {
+    String? email,
     String? city,
     String? district,
   }) async {
@@ -133,6 +138,7 @@ class LocalAuthService implements IAuthService {
     final newUser = UserModel(
       id: _uuid.v4(),
       phoneNumber: phoneNumber,
+      email: email,
       fullName: fullName,
       createdAt: DateTime.now(),
       city: city,
@@ -163,6 +169,27 @@ class LocalAuthService implements IAuthService {
 
     if (userJson == null) return null;
     return UserModel.fromJson(jsonDecode(userJson));
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    throw UnsupportedError(
+      'Şifre yenileme e-postası yalnızca Supabase bağlantısında kullanılabilir.',
+    );
+  }
+
+  @override
+  Future<void> verifyPasswordResetCode(String email, String code) async {
+    throw UnsupportedError(
+      'Şifre yenileme kodu yalnızca Supabase bağlantısında kullanılabilir.',
+    );
+  }
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    throw UnsupportedError(
+      'Şifre güncelleme yalnızca Supabase bağlantısında kullanılabilir.',
+    );
   }
 
   @override
@@ -284,26 +311,52 @@ class SupabaseAuthService implements IAuthService {
     return null;
   }
 
+  Future<Map<String, dynamic>?> _findProfileByEmail(String email) async {
+    final normalizedEmail = _normalizeEmail(email);
+    if (normalizedEmail == null) return null;
+
+    return await _client
+        .from('users')
+        .select()
+        .eq('email', normalizedEmail)
+        .maybeSingle();
+  }
+
   @override
   Future<UserModel?> login(String phoneNumber, String password) async {
     AuthResponse? authResponse;
     AuthException? lastAuthException;
+    final profileByPhone = await _findProfileByPhone(phoneNumber);
+    final email = _normalizeEmail(profileByPhone?['email'] as String?);
 
-    for (final candidate in _phoneLookupCandidates(phoneNumber)) {
+    if (email != null) {
       try {
         authResponse = await _client.auth.signInWithPassword(
-          phone: candidate,
+          email: email,
           password: password,
         );
-        break;
       } on AuthException catch (e) {
         lastAuthException = e;
-        final errorText = e.toString().toLowerCase();
-        if (errorText.contains('phone_not_confirmed') ||
-            errorText.contains('phone not confirmed')) {
-          throw Exception(
-            'Telefon dogrulanmamis. Supabase Authentication ayarlarinda Phone confirmation kapali olmali ya da SMS dogrulama tamamlanmali.',
+      }
+    }
+
+    if (authResponse == null) {
+      for (final candidate in _phoneLookupCandidates(phoneNumber)) {
+        try {
+          authResponse = await _client.auth.signInWithPassword(
+            phone: candidate,
+            password: password,
           );
+          break;
+        } on AuthException catch (e) {
+          lastAuthException = e;
+          final errorText = e.toString().toLowerCase();
+          if (errorText.contains('phone_not_confirmed') ||
+              errorText.contains('phone not confirmed')) {
+            throw Exception(
+              'Telefon dogrulanmamis. Supabase Authentication ayarlarinda Phone confirmation kapali olmali ya da SMS dogrulama tamamlanmali.',
+            );
+          }
         }
       }
     }
@@ -338,28 +391,43 @@ class SupabaseAuthService implements IAuthService {
     String phoneNumber,
     String password,
     String fullName, {
+    String? email,
     String? city,
     String? district,
   }) async {
     final normalizedPhone = _normalizePhoneNumber(phoneNumber);
+    final normalizedEmail = _normalizeEmail(email);
+    if (normalizedEmail == null) {
+      throw Exception('E-posta adresi giriniz.');
+    }
+
     final existingUser = await _findProfileByPhone(phoneNumber);
 
     if (existingUser != null) {
       throw Exception('Bu telefon numarası zaten kullanılıyor.');
     }
 
+    final existingEmail = await _findProfileByEmail(normalizedEmail);
+    if (existingEmail != null) {
+      throw Exception('Bu e-posta adresi zaten kullanılıyor.');
+    }
+
     late final AuthResponse authResponse;
     try {
       authResponse = await _client.auth.signUp(
-        phone: normalizedPhone,
+        email: normalizedEmail,
         password: password,
-        data: {'full_name': fullName, 'name': fullName},
+        data: {
+          'full_name': fullName,
+          'name': fullName,
+          'phone_number': normalizedPhone,
+        },
       );
     } on AuthException catch (e) {
       final errorText = e.toString().toLowerCase();
-      if (errorText.contains('phone_provider_disabled')) {
+      if (errorText.contains('email_provider_disabled')) {
         throw Exception(
-          'Supabase Phone provider kapali. Authentication > Providers > Phone ayarini acmalisiniz.',
+          'Supabase Email provider kapali. Authentication > Providers > Email ayarini acmalisiniz.',
         );
       }
       rethrow;
@@ -376,6 +444,7 @@ class SupabaseAuthService implements IAuthService {
             .insert({
               'id': authUser.id,
               'phone_number': normalizedPhone,
+              'email': normalizedEmail,
               'password': password,
               'full_name': fullName,
               'commission_rate': 8.0,
@@ -391,6 +460,12 @@ class SupabaseAuthService implements IAuthService {
     await prefs.setString(_sessionUserIdKey, createdUser['id'] as String);
 
     return userFromDbMap(createdUser);
+  }
+
+  String? _normalizeEmail(String? email) {
+    final trimmed = email?.trim().toLowerCase();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
   }
 
   @override
@@ -416,6 +491,71 @@ class SupabaseAuthService implements IAuthService {
     }
 
     return userFromDbMap(profile);
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    final normalizedEmail = _normalizeEmail(email);
+    if (normalizedEmail == null) {
+      throw Exception('E-posta adresi giriniz.');
+    }
+
+    try {
+      await _client.auth.resetPasswordForEmail(normalizedEmail);
+    } on AuthException catch (e) {
+      final message = e.message.toLowerCase();
+      if (e.statusCode == '429' ||
+          message.contains('too many requests')) {
+        throw Exception(
+          'Supabase saatlik e-posta limiti doldu. Yerleşik e-posta sağlayıcıda saatte en fazla 2 email gönderilebilir. Lütfen yaklaşık 1 saat sonra tekrar deneyin veya Supabase SMTP ayarı yapın.',
+        );
+      }
+      if (e.statusCode == '500' ||
+          message.contains('error sending recovery email') ||
+          message.contains('error sending email')) {
+        throw Exception(
+          'Şifre yenileme e-postası gönderilemedi. Supabase, SMTP sağlayıcısına e-posta gönderirken hata aldı. Brevo kullanıyorsanız Supabase sunucu IP adresini Brevo > Security > Authorized IPs alanında onaylayın veya SMTP IP kısıtlamasını düzenleyin.',
+        );
+      }
+      throw Exception('Şifre yenileme e-postası gönderilemedi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> verifyPasswordResetCode(String email, String code) async {
+    final normalizedEmail = _normalizeEmail(email);
+    final normalizedCode = code.trim();
+
+    if (normalizedEmail == null) {
+      throw Exception('E-posta adresi giriniz.');
+    }
+
+    if (normalizedCode.isEmpty) {
+      throw Exception('Yenileme kodunu giriniz.');
+    }
+
+    try {
+      await _client.auth.verifyOTP(
+        email: normalizedEmail,
+        token: normalizedCode,
+        type: OtpType.recovery,
+      );
+    } on AuthException catch (e) {
+      throw Exception('Yenileme kodu doğrulanamadı: ${e.message}');
+    }
+  }
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    if (newPassword.length < 6) {
+      throw Exception('Şifre en az 6 karakter olmalı.');
+    }
+
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+    } on AuthException catch (e) {
+      throw Exception('Şifre güncellenemedi: ${e.message}');
+    }
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
+import 'password_reset_screen.dart';
 
 const String _kvkkAydinlatmaMetni = '''
 Hal Fiyat KVKK Aydınlatma Metni
@@ -240,7 +241,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      context.read<AuthProvider>().clearError();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PasswordResetScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text('Şifremi Unuttum'),
+                  ),
+                ),
+                const SizedBox(height: 8),
 
                 // Kayıt ol linki
                 Row(

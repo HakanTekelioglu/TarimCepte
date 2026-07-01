@@ -14,6 +14,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -52,6 +53,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -72,6 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _normalizePhoneNumber(_phoneController.text.trim()),
       _passwordController.text,
       _nameController.text.trim(),
+      email: _emailController.text.trim(),
       city: _selectedCity,
       district: _selectedDistrict,
     );
@@ -110,6 +113,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Ad soyad giriniz';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  decoration: const InputDecoration(
+                    labelText: 'E-posta',
+                    hintText: 'ornek@mail.com',
+                    prefixIcon: Icon(Icons.mail_outline),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    final email = value?.trim() ?? '';
+                    if (email.isEmpty) {
+                      return 'E-posta giriniz';
+                    }
+                    final isValid = RegExp(
+                      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                    ).hasMatch(email);
+                    if (!isValid) {
+                      return 'Geçerli bir e-posta giriniz';
                     }
                     return null;
                   },

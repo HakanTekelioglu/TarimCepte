@@ -10,6 +10,7 @@ Map<String, dynamic> userToDbMap(UserModel user) {
   return {
     'id': user.id,
     'phone_number': user.phoneNumber,
+    'email': user.email,
     'full_name': user.fullName,
     'commission_rate': user.commissionRate,
     'created_at': user.createdAt.toIso8601String(),
@@ -23,6 +24,7 @@ UserModel userFromDbMap(Map<String, dynamic> map) {
   return UserModel(
     id: map['id'] as String,
     phoneNumber: map['phone_number'] as String? ?? '',
+    email: map['email'] as String?,
     fullName: map['full_name'] as String,
     commissionRate: (map['commission_rate'] as num?)?.toDouble() ?? 8.0,
     createdAt: _parseDate(map['created_at']),

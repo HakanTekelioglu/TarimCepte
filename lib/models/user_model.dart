@@ -2,6 +2,7 @@
 class UserModel {
   final String id;
   final String phoneNumber;
+  final String? email;
   final String fullName;
   final double commissionRate; // Komisyoncu kesinti oranı (%)
   final DateTime createdAt;
@@ -12,6 +13,7 @@ class UserModel {
   UserModel({
     required this.id,
     required this.phoneNumber,
+    this.email,
     required this.fullName,
     this.commissionRate = 8.0, // Varsayılan %
     required this.createdAt,
@@ -25,6 +27,7 @@ class UserModel {
     return UserModel(
       id: json['id'] as String,
       phoneNumber: (json['phoneNumber'] ?? json['email']) as String,
+      email: json['email'] as String?,
       fullName: json['fullName'] as String,
       commissionRate: (json['commissionRate'] as num?)?.toDouble() ?? 8.0,
       createdAt: DateTime.parse(json['createdAt'] as String),
@@ -39,6 +42,7 @@ class UserModel {
     return {
       'id': id,
       'phoneNumber': phoneNumber,
+      'email': email,
       'fullName': fullName,
       'commissionRate': commissionRate,
       'createdAt': createdAt.toIso8601String(),
@@ -52,6 +56,7 @@ class UserModel {
   UserModel copyWith({
     String? id,
     String? phoneNumber,
+    String? email,
     String? fullName,
     double? commissionRate,
     DateTime? createdAt,
@@ -62,6 +67,7 @@ class UserModel {
     return UserModel(
       id: id ?? this.id,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
       fullName: fullName ?? this.fullName,
       commissionRate: commissionRate ?? this.commissionRate,
       createdAt: createdAt ?? this.createdAt,

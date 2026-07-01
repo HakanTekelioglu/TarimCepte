@@ -10,7 +10,7 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
 
   AuthProvider({IAuthService? authService})
-      : _authService = authService ?? LocalAuthService();
+    : _authService = authService ?? LocalAuthService();
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -58,6 +58,7 @@ class AuthProvider extends ChangeNotifier {
     String phoneNumber,
     String password,
     String fullName, {
+    String? email,
     String? city,
     String? district,
   }) async {
@@ -70,6 +71,7 @@ class AuthProvider extends ChangeNotifier {
         phoneNumber,
         password,
         fullName,
+        email: email,
         city: city,
         district: district,
       );
@@ -80,6 +82,60 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     return _currentUser != null;
+  }
+
+  Future<bool> sendPasswordResetEmail(String email) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> verifyPasswordResetCode(String email, String code) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _authService.verifyPasswordResetCode(email, code);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updatePassword(String newPassword) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _authService.updatePassword(newPassword);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Çıkış yap
