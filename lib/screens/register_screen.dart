@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../utils/app_constants.dart';
-import 'home_screen.dart';
+import 'registration_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -80,9 +80,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     if (success && mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false,
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder:
+              (_) => RegistrationVerificationScreen(
+                email: _emailController.text.trim(),
+                phoneNumber: _normalizePhoneNumber(
+                  _phoneController.text.trim(),
+                ),
+                password: _passwordController.text,
+                fullName: _nameController.text.trim(),
+                city: _selectedCity,
+                district: _selectedDistrict,
+              ),
+        ),
       );
     }
   }

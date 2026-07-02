@@ -67,11 +67,46 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentUser = await _authService.register(
+      await _authService.register(
         phoneNumber,
         password,
         fullName,
         email: email,
+        city: city,
+        district: district,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> verifyRegistrationCode(
+    String email,
+    String code, {
+    required String phoneNumber,
+    required String password,
+    required String fullName,
+    String? city,
+    String? district,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _currentUser = await _authService.verifyRegistrationCode(
+        email,
+        code,
+        phoneNumber: phoneNumber,
+        password: password,
+        fullName: fullName,
         city: city,
         district: district,
       );
@@ -82,6 +117,24 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     return _currentUser != null;
+  }
+
+  Future<bool> resendRegistrationCode(String email) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _authService.resendRegistrationCode(email);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   Future<bool> sendPasswordResetEmail(String email) async {

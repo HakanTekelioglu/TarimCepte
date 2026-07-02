@@ -20,6 +20,16 @@ abstract class IAuthService {
   });
   Future<void> logout();
   Future<UserModel?> getCurrentUser();
+  Future<UserModel?> verifyRegistrationCode(
+    String email,
+    String code, {
+    required String phoneNumber,
+    required String password,
+    required String fullName,
+    String? city,
+    String? district,
+  });
+  Future<void> resendRegistrationCode(String email);
   Future<void> sendPasswordResetEmail(String email);
   Future<void> verifyPasswordResetCode(String email, String code);
   Future<void> updatePassword(String newPassword);
@@ -169,6 +179,28 @@ class LocalAuthService implements IAuthService {
 
     if (userJson == null) return null;
     return UserModel.fromJson(jsonDecode(userJson));
+  }
+
+  @override
+  Future<UserModel?> verifyRegistrationCode(
+    String email,
+    String code, {
+    required String phoneNumber,
+    required String password,
+    required String fullName,
+    String? city,
+    String? district,
+  }) async {
+    throw UnsupportedError(
+      'Kayit dogrulama kodu yalnizca Supabase baglantisinda kullanilabilir.',
+    );
+  }
+
+  @override
+  Future<void> resendRegistrationCode(String email) async {
+    throw UnsupportedError(
+      'Kayit dogrulama kodu yalnizca Supabase baglantisinda kullanilabilir.',
+    );
   }
 
   @override
@@ -438,6 +470,67 @@ class SupabaseAuthService implements IAuthService {
       throw Exception('Kullanici olusturulamadi.');
     }
 
+    if (authResponse.session != null) {
+      await _client.auth.signOut();
+      throw Exception(
+        'Supabase e-posta dogrulamasi kapali gorunuyor. Kod ile kayit onayi icin Dashboard > Authentication > Providers > Email alaninda Confirm email ayarini acin.',
+      );
+    }
+
+    return null;
+  }
+
+  @override
+  Future<UserModel?> verifyRegistrationCode(
+    String email,
+    String code, {
+    required String phoneNumber,
+    required String password,
+    required String fullName,
+    String? city,
+    String? district,
+  }) async {
+    final normalizedEmail = _normalizeEmail(email);
+    final normalizedCode = code.trim();
+    final normalizedPhone = _normalizePhoneNumber(phoneNumber);
+
+    if (normalizedEmail == null) {
+      throw Exception('E-posta adresi giriniz.');
+    }
+
+    if (normalizedCode.isEmpty) {
+      throw Exception('Dogrulama kodunu giriniz.');
+    }
+
+    late final AuthResponse authResponse;
+    try {
+      authResponse = await _client.auth.verifyOTP(
+        email: normalizedEmail,
+        token: normalizedCode,
+        type: OtpType.signup,
+      );
+    } on AuthException catch (e) {
+      throw Exception('Kayit dogrulama kodu onaylanamadi: ${e.message}');
+    }
+
+    final authUser = authResponse.user;
+    if (authUser == null) {
+      throw Exception('Kullanici dogrulanamadi.');
+    }
+
+    final existingProfile =
+        await _client
+            .from('users')
+            .select()
+            .eq('id', authUser.id)
+            .maybeSingle();
+
+    if (existingProfile != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_sessionUserIdKey, existingProfile['id'] as String);
+      return userFromDbMap(existingProfile);
+    }
+
     final createdUser =
         await _client
             .from('users')
@@ -460,6 +553,26 @@ class SupabaseAuthService implements IAuthService {
     await prefs.setString(_sessionUserIdKey, createdUser['id'] as String);
 
     return userFromDbMap(createdUser);
+  }
+
+  @override
+  Future<void> resendRegistrationCode(String email) async {
+    final normalizedEmail = _normalizeEmail(email);
+    if (normalizedEmail == null) {
+      throw Exception('E-posta adresi giriniz.');
+    }
+
+    try {
+      await _client.auth.resend(email: normalizedEmail, type: OtpType.signup);
+    } on AuthException catch (e) {
+      final message = e.message.toLowerCase();
+      if (e.statusCode == '429' || message.contains('too many requests')) {
+        throw Exception(
+          'Supabase saatlik e-posta limiti doldu. Lutfen yaklasik 1 saat sonra tekrar deneyin veya Supabase SMTP ayari yapin.',
+        );
+      }
+      throw Exception('Dogrulama kodu tekrar gonderilemedi: ${e.message}');
+    }
   }
 
   String? _normalizeEmail(String? email) {
@@ -504,8 +617,7 @@ class SupabaseAuthService implements IAuthService {
       await _client.auth.resetPasswordForEmail(normalizedEmail);
     } on AuthException catch (e) {
       final message = e.message.toLowerCase();
-      if (e.statusCode == '429' ||
-          message.contains('too many requests')) {
+      if (e.statusCode == '429' || message.contains('too many requests')) {
         throw Exception(
           'Supabase saatlik e-posta limiti doldu. Yerleşik e-posta sağlayıcıda saatte en fazla 2 email gönderilebilir. Lütfen yaklaşık 1 saat sonra tekrar deneyin veya Supabase SMTP ayarı yapın.',
         );
@@ -563,7 +675,9 @@ class SupabaseAuthService implements IAuthService {
     } on AuthException catch (e) {
       throw Exception('Şifre güncellenemedi: ${e.message}');
     } catch (e) {
-      throw Exception('Şifre güncellendi ancak kullanıcı tablosu güncellenemedi: $e');
+      throw Exception(
+        'Şifre güncellendi ancak kullanıcı tablosu güncellenemedi: $e',
+      );
     }
   }
 

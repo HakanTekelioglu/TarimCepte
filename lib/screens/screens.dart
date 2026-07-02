@@ -1,6 +1,7 @@
 export 'login_screen.dart';
 export 'password_reset_screen.dart';
 export 'register_screen.dart';
+export 'registration_verification_screen.dart';
 export 'home_screen.dart';
 export 'products_screen.dart';
 export 'add_harvest_screen.dart';
