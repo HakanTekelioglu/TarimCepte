@@ -115,7 +115,7 @@ lib/
 Uygulama artık Supabase tabanlıdır ve tüm veriler (`users`, `products`, `seasons`, `harvests`) Supabase Postgres üzerinde tutulur.
 
 ### Gerekli Supabase Ayarları
-- Authentication zorunlu değil (uygulama `users` tablosunda telefon + şifre ile giriş yapar)
+- Supabase Authentication zorunludur; parolalar `auth.users` tarafında Supabase tarafından hash'lenir, `public.users` yalnızca profil bilgisidir.
 - SQL Editor'da `supabase/schema.sql` scriptini çalıştırın
 - Project Settings → API bölümünden `SUPABASE_URL` ve `anon` key değerlerini alın
 

@@ -538,7 +538,6 @@ class SupabaseAuthService implements IAuthService {
               'id': authUser.id,
               'phone_number': normalizedPhone,
               'email': normalizedEmail,
-              'password': password,
               'full_name': fullName,
               'commission_rate': 8.0,
               'is_admin': false,
@@ -665,19 +664,8 @@ class SupabaseAuthService implements IAuthService {
 
     try {
       await _client.auth.updateUser(UserAttributes(password: newPassword));
-      final userId = _client.auth.currentUser?.id;
-      if (userId != null) {
-        await _client
-            .from('users')
-            .update({'password': newPassword})
-            .eq('id', userId);
-      }
     } on AuthException catch (e) {
       throw Exception('Şifre güncellenemedi: ${e.message}');
-    } catch (e) {
-      throw Exception(
-        'Şifre güncellendi ancak kullanıcı tablosu güncellenemedi: $e',
-      );
     }
   }
 

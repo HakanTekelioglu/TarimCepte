@@ -44,7 +44,6 @@ create table if not exists public.users (
   id uuid primary key default gen_random_uuid(),
   phone_number text not null unique,
   email text,
-  password text,
   full_name text not null,
   commission_rate double precision not null default 8.0,
   is_admin boolean not null default false,
@@ -54,17 +53,12 @@ create table if not exists public.users (
 
 alter table public.users drop constraint if exists users_id_fkey;
 alter table public.users alter column id set default gen_random_uuid();
-alter table public.users add column if not exists password text;
-alter table public.users alter column password drop not null;
+alter table public.users drop column if exists password;
 alter table public.users add column if not exists phone_number text;
 alter table public.users alter column phone_number set not null;
 alter table public.users add column if not exists email text;
 alter table public.users add column if not exists auth_migrated_at timestamptz;
 create unique index if not exists users_phone_number_key on public.users(phone_number);
-
-update public.users
-set password = coalesce(password, '123456')
-where password is null;
 
 alter table public.users
   drop constraint if exists users_id_auth_fkey;
