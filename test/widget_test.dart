@@ -27,5 +27,6 @@ void main() {
 
     // Verify that the app loads
     expect(find.text('Hal Fiyat'), findsWidgets);
+    expect(find.text('Beni hatırla'), findsOneWidget);
   });
 }

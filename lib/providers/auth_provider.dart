@@ -18,12 +18,14 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
 
   /// Uygulama başlangıcında mevcut kullanıcıyı kontrol et
-  Future<void> checkCurrentUser() async {
+  Future<void> checkCurrentUser({bool isAppStartup = false}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      _currentUser = await _authService.getCurrentUser();
+      _currentUser = await _authService.getCurrentUser(
+        isAppStartup: isAppStartup,
+      );
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -34,13 +36,21 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Giriş yap
-  Future<bool> login(String phoneNumber, String password) async {
+  Future<bool> login(
+    String phoneNumber,
+    String password, {
+    bool rememberMe = false,
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _currentUser = await _authService.login(phoneNumber, password);
+      _currentUser = await _authService.login(
+        phoneNumber,
+        password,
+        rememberMe: rememberMe,
+      );
       if (_currentUser == null) {
         _error = 'Telefon numarası veya şifre hatalı';
       }
@@ -196,6 +206,11 @@ class AuthProvider extends ChangeNotifier {
     await _authService.logout();
     _currentUser = null;
     notifyListeners();
+  }
+
+  Future<void> markSessionActive() async {
+    if (_currentUser == null) return;
+    await _authService.markSessionActive();
   }
 
   /// Komisyon oranını güncelle

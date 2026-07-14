@@ -70,14 +70,77 @@ class HalFiyatApp extends StatelessWidget {
           create: (_) => SeasonProvider(seasonService: _seasonService),
         ),
       ],
-      child: MaterialApp(
-        title: 'Hal Fiyat',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        home: const AuthWrapper(),
-      ),
+      child: const _SessionLifecycleApp(),
+    );
+  }
+}
+
+class _SessionLifecycleApp extends StatefulWidget {
+  const _SessionLifecycleApp();
+
+  @override
+  State<_SessionLifecycleApp> createState() => _SessionLifecycleAppState();
+}
+
+class _SessionLifecycleAppState extends State<_SessionLifecycleApp>
+    with WidgetsBindingObserver {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  Future<void> _pauseActivityUpdate = Future.value();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _pauseActivityUpdate = _markSessionActive();
+    } else if (state == AppLifecycleState.resumed) {
+      _recheckAuthAfterResume();
+    }
+  }
+
+  Future<void> _markSessionActive() async {
+    try {
+      await context.read<AuthProvider>().markSessionActive();
+    } catch (_) {
+      // Oturum kontrolü uygulamaya dönüldüğünde tekrar yapılır.
+    }
+  }
+
+  Future<void> _recheckAuthAfterResume() async {
+    await _pauseActivityUpdate;
+    if (!mounted) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final wasLoggedIn = authProvider.isLoggedIn;
+    await authProvider.checkCurrentUser();
+
+    if (!mounted || !wasLoggedIn || authProvider.isLoggedIn) return;
+    _navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      navigatorKey: _navigatorKey,
+      title: 'Hal Fiyat',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      home: const AuthWrapper(),
     );
   }
 }
@@ -97,13 +160,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAuth();
+      _checkAuth(isAppStartup: true);
     });
   }
 
-  Future<void> _checkAuth() async {
+  Future<void> _checkAuth({bool isAppStartup = false}) async {
     final authProvider = context.read<AuthProvider>();
-    await authProvider.checkCurrentUser();
+    await authProvider.checkCurrentUser(isAppStartup: isAppStartup);
+    if (!mounted) return;
     setState(() {
       _isInitialized = true;
     });

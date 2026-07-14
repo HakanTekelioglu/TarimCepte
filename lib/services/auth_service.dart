@@ -4,12 +4,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/models.dart';
+import 'auth_session_policy.dart';
 import 'supabase_mapper.dart';
 
 /// Kimlik doğrulama servisi
 /// Firebase entegrasyonu için hazır altyapı
 abstract class IAuthService {
-  Future<UserModel?> login(String phoneNumber, String password);
+  Future<UserModel?> login(
+    String phoneNumber,
+    String password, {
+    bool rememberMe = false,
+  });
   Future<UserModel?> register(
     String phoneNumber,
     String password,
@@ -19,7 +24,8 @@ abstract class IAuthService {
     String? district,
   });
   Future<void> logout();
-  Future<UserModel?> getCurrentUser();
+  Future<UserModel?> getCurrentUser({bool isAppStartup = false});
+  Future<void> markSessionActive();
   Future<UserModel?> verifyRegistrationCode(
     String email,
     String code, {
@@ -42,6 +48,8 @@ class LocalAuthService implements IAuthService {
   static const String _userKey = 'current_user';
   static const String _usersKey = 'all_users';
   static const String _adminInitKey = 'admin_initialized';
+  static const String _rememberMeKey = 'auth_remember_me';
+  static const String _lastActivityKey = 'auth_last_activity_at';
   final Uuid _uuid = const Uuid();
 
   String _envOrDefine(String key) {
@@ -100,7 +108,11 @@ class LocalAuthService implements IAuthService {
   }
 
   @override
-  Future<UserModel?> login(String phoneNumber, String password) async {
+  Future<UserModel?> login(
+    String phoneNumber,
+    String password, {
+    bool rememberMe = false,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
 
     // Admin hesabını oluştur
@@ -116,6 +128,7 @@ class LocalAuthService implements IAuthService {
       if (user['phoneNumber'] == phoneNumber && user['password'] == password) {
         final userModel = UserModel.fromJson(user);
         await prefs.setString(_userKey, jsonEncode(userModel.toJson()));
+        await _saveSessionPreference(prefs, rememberMe);
         return userModel;
       }
     }
@@ -162,6 +175,7 @@ class LocalAuthService implements IAuthService {
 
     await prefs.setString(_usersKey, jsonEncode(users));
     await prefs.setString(_userKey, jsonEncode(newUser.toJson()));
+    await _saveSessionPreference(prefs, false);
 
     return newUser;
   }
@@ -170,15 +184,58 @@ class LocalAuthService implements IAuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_userKey);
+    await prefs.remove(_rememberMeKey);
+    await prefs.remove(_lastActivityKey);
   }
 
   @override
-  Future<UserModel?> getCurrentUser() async {
+  Future<UserModel?> getCurrentUser({bool isAppStartup = false}) async {
     final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool(_rememberMeKey) ?? false;
+
+    if (isAppStartup && !rememberMe) {
+      await logout();
+      return null;
+    }
+
+    if (rememberMe &&
+        AuthSessionPolicy.isExpired(prefs.getString(_lastActivityKey))) {
+      await logout();
+      return null;
+    }
+
     final userJson = prefs.getString(_userKey);
 
     if (userJson == null) return null;
+    await markSessionActive();
     return UserModel.fromJson(jsonDecode(userJson));
+  }
+
+  @override
+  Future<void> markSessionActive() async {
+    final prefs = await SharedPreferences.getInstance();
+    if ((prefs.getBool(_rememberMeKey) ?? false) &&
+        prefs.containsKey(_userKey)) {
+      await prefs.setString(
+        _lastActivityKey,
+        DateTime.now().toUtc().toIso8601String(),
+      );
+    }
+  }
+
+  Future<void> _saveSessionPreference(
+    SharedPreferences prefs,
+    bool rememberMe,
+  ) async {
+    await prefs.setBool(_rememberMeKey, rememberMe);
+    if (rememberMe) {
+      await prefs.setString(
+        _lastActivityKey,
+        DateTime.now().toUtc().toIso8601String(),
+      );
+    } else {
+      await prefs.remove(_lastActivityKey);
+    }
   }
 
   @override
@@ -255,6 +312,8 @@ class LocalAuthService implements IAuthService {
 class SupabaseAuthService implements IAuthService {
   final SupabaseClient _client;
   static const String _sessionUserIdKey = 'supabase_session_user_id';
+  static const String _rememberMeKey = 'auth_remember_me';
+  static const String _lastActivityKey = 'auth_last_activity_at';
 
   SupabaseAuthService({SupabaseClient? client})
     : _client = client ?? Supabase.instance.client;
@@ -355,7 +414,11 @@ class SupabaseAuthService implements IAuthService {
   }
 
   @override
-  Future<UserModel?> login(String phoneNumber, String password) async {
+  Future<UserModel?> login(
+    String phoneNumber,
+    String password, {
+    bool rememberMe = false,
+  }) async {
     AuthResponse? authResponse;
     AuthException? lastAuthException;
     final profileByPhone = await _findProfileByPhone(phoneNumber);
@@ -414,6 +477,7 @@ class SupabaseAuthService implements IAuthService {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_sessionUserIdKey, profile['id'] as String);
+    await _saveSessionPreference(prefs, rememberMe);
 
     return userFromDbMap(profile);
   }
@@ -528,6 +592,7 @@ class SupabaseAuthService implements IAuthService {
     if (existingProfile != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_sessionUserIdKey, existingProfile['id'] as String);
+      await _saveSessionPreference(prefs, false);
       return userFromDbMap(existingProfile);
     }
 
@@ -550,6 +615,7 @@ class SupabaseAuthService implements IAuthService {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_sessionUserIdKey, createdUser['id'] as String);
+    await _saveSessionPreference(prefs, false);
 
     return userFromDbMap(createdUser);
   }
@@ -584,12 +650,32 @@ class SupabaseAuthService implements IAuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_sessionUserIdKey);
-    await _client.auth.signOut();
+    await prefs.remove(_rememberMeKey);
+    await prefs.remove(_lastActivityKey);
+    if (_client.auth.currentUser == null) return;
+    try {
+      await _client.auth.signOut();
+    } catch (_) {
+      // Yerel oturum temizlendi; ağ hatası çıkışı engellememeli.
+    }
   }
 
   @override
-  Future<UserModel?> getCurrentUser() async {
+  Future<UserModel?> getCurrentUser({bool isAppStartup = false}) async {
     final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool(_rememberMeKey) ?? false;
+
+    if (isAppStartup && !rememberMe) {
+      await logout();
+      return null;
+    }
+
+    if (rememberMe &&
+        AuthSessionPolicy.isExpired(prefs.getString(_lastActivityKey))) {
+      await logout();
+      return null;
+    }
+
     final userId =
         _client.auth.currentUser?.id ?? prefs.getString(_sessionUserIdKey);
     if (userId == null) return null;
@@ -598,11 +684,41 @@ class SupabaseAuthService implements IAuthService {
         await _client.from('users').select().eq('id', userId).maybeSingle();
 
     if (profile == null) {
-      await prefs.remove(_sessionUserIdKey);
+      await logout();
       return null;
     }
 
+    await markSessionActive();
     return userFromDbMap(profile);
+  }
+
+  @override
+  Future<void> markSessionActive() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSession =
+        _client.auth.currentUser != null ||
+        prefs.containsKey(_sessionUserIdKey);
+    if ((prefs.getBool(_rememberMeKey) ?? false) && hasSession) {
+      await prefs.setString(
+        _lastActivityKey,
+        DateTime.now().toUtc().toIso8601String(),
+      );
+    }
+  }
+
+  Future<void> _saveSessionPreference(
+    SharedPreferences prefs,
+    bool rememberMe,
+  ) async {
+    await prefs.setBool(_rememberMeKey, rememberMe);
+    if (rememberMe) {
+      await prefs.setString(
+        _lastActivityKey,
+        DateTime.now().toUtc().toIso8601String(),
+      );
+    } else {
+      await prefs.remove(_lastActivityKey);
+    }
   }
 
   @override

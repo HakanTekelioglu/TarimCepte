@@ -41,6 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberMe = false;
 
   String _normalizePhoneNumber(String value) {
     final cleaned = value.replaceAll(RegExp(r'[^0-9+]'), '');
@@ -74,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await authProvider.login(
       _normalizePhoneNumber(_phoneController.text.trim()),
       _passwordController.text,
+      rememberMe: _rememberMe,
     );
 
     if (success && mounted) {
@@ -198,7 +200,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+
+                CheckboxListTile(
+                  value: _rememberMe,
+                  onChanged: (value) {
+                    setState(() {
+                      _rememberMe = value ?? false;
+                    });
+                  },
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: const Text('Beni hatırla'),
+                ),
+                const SizedBox(height: 8),
 
                 // Hata mesajı
                 Consumer<AuthProvider>(
