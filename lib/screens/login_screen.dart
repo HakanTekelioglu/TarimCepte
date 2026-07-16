@@ -1,33 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../domain/auth/turkish_phone_number.dart';
+import '../features/legal/kvkk_notice_dialog.dart';
 import '../providers/providers.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
 import 'password_reset_screen.dart';
-
-const String _kvkkAydinlatmaMetni = '''
-Hal Fiyat KVKK Aydınlatma Metni
-
-6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında, Hal Fiyat uygulamasını kullanırken paylaştığınız kişisel veriler aşağıdaki çerçevede işlenmektedir.
-
-Veri sorumlusu
-Kişisel verileriniz, Hal Fiyat uygulamasının hizmetlerinin sunulması ve yönetilmesi amacıyla uygulama sahibi/veri sorumlusu tarafından işlenir.
-
-İşlenen kişisel veriler
-Ad soyad, telefon numarası, şifre, şehir, ilçe, kullanıcı rolü, ürün, sezon, hasat ve fiyat kayıtları ile uygulama kullanımına ilişkin işlem kayıtları işlenebilir.
-
-Kişisel verilerin işlenme amaçları
-Verileriniz; kullanıcı hesabı oluşturmak ve güvenli giriş sağlamak, uygulama hizmetlerini sunmak, ürün ve hasat kayıtlarını yönetmek, fiyat takibi yapmak, destek taleplerini karşılamak, güvenliği sağlamak ve mevzuattan doğan yükümlülükleri yerine getirmek amacıyla işlenir.
-
-Kişisel verilerin aktarımı
-Kişisel verileriniz; uygulama altyapısının işletilmesi, veri saklama, teknik destek ve yasal yükümlülüklerin yerine getirilmesi amaçlarıyla hizmet sağlayıcılar ve hukuken yetkili kamu kurumlarıyla sınırlı olarak paylaşılabilir.
-
-Toplama yöntemi ve hukuki sebep
-Kişisel verileriniz uygulama formları, kullanıcı işlemleri ve elektronik sistemler aracılığıyla toplanır. Verileriniz; sözleşmenin kurulması veya ifası, veri sorumlusunun hukuki yükümlülüğünü yerine getirmesi, bir hakkın tesisi, kullanılması veya korunması ve meşru menfaat hukuki sebeplerine dayanılarak işlenir.
-
-İlgili kişi hakları
-KVKK'nın 11. maddesi kapsamında; kişisel verilerinizin işlenip işlenmediğini öğrenme, işlenmişse bilgi talep etme, işlenme amacını ve amaca uygun kullanılıp kullanılmadığını öğrenme, aktarıldığı üçüncü kişileri bilme, eksik veya yanlış işlenmiş verilerin düzeltilmesini isteme, mevzuatta öngörülen şartlarda silinmesini veya yok edilmesini isteme, aktarıldığı üçüncü kişilere yapılan işlemlerin bildirilmesini isteme, otomatik sistemlerle analiz sonucu aleyhinize çıkan sonuca itiraz etme ve kanuna aykırı işleme nedeniyle zarara uğramanız halinde giderim talep etme haklarına sahipsiniz.
-''';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,24 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
-  String _normalizePhoneNumber(String value) {
-    final cleaned = value.replaceAll(RegExp(r'[^0-9+]'), '');
-
-    if (cleaned.startsWith('+')) {
-      return cleaned;
-    }
-
-    if (cleaned.startsWith('90')) {
-      return '+$cleaned';
-    }
-
-    if (cleaned.startsWith('0')) {
-      return '+90${cleaned.substring(1)}';
-    }
-
-    return '+90$cleaned';
-  }
-
   @override
   void dispose() {
     _phoneController.dispose();
@@ -71,9 +31,12 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final identifier = _phoneController.text.trim();
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.login(
-      _normalizePhoneNumber(_phoneController.text.trim()),
+      identifier.contains('@')
+          ? identifier.toLowerCase()
+          : TurkishPhoneNumber.normalize(identifier),
       _passwordController.text,
       rememberMe: _rememberMe,
     );
@@ -83,32 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
     }
-  }
-
-  Future<void> _showKvkkDialog() {
-    return showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('KVKK Aydınlatma Metni'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Text(
-                _kvkkAydinlatmaMetni,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Kapat'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -151,21 +88,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Telefon alanı
                 TextFormField(
                   controller: _phoneController,
-                  keyboardType: TextInputType.phone,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.username],
                   decoration: const InputDecoration(
-                    labelText: 'Telefon Numarası',
-                    hintText: '05XXXXXXXXX',
-                    prefixIcon: Icon(Icons.phone_outlined),
+                    labelText: 'Telefon Numarası veya E-posta',
+                    hintText: '05XXXXXXXXX veya ornek@mail.com',
+                    prefixIcon: Icon(Icons.person_outline),
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Telefon numarası giriniz';
+                    final identifier = value?.trim() ?? '';
+                    if (identifier.isEmpty) {
+                      return 'Telefon numarası veya e-posta giriniz';
+                    }
+                    if (identifier.contains('@')) {
+                      final isValidEmail = RegExp(
+                        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                      ).hasMatch(identifier);
+                      return isValidEmail
+                          ? null
+                          : 'Geçerli bir e-posta giriniz';
                     }
                     final digitCount =
-                        value.replaceAll(RegExp(r'[^0-9]'), '').length;
+                        identifier.replaceAll(RegExp(r'[^0-9]'), '').length;
                     if (digitCount < 10) {
-                      return 'Geçerli bir telefon numarası giriniz';
+                      return 'Geçerli bir telefon numarası veya e-posta giriniz';
                     }
                     return null;
                   },
@@ -295,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 8),
 
                 TextButton.icon(
-                  onPressed: _showKvkkDialog,
+                  onPressed: () => KvkkNoticeDialog.show(context),
                   icon: const Icon(Icons.privacy_tip_outlined),
                   label: const Text('KVKK Aydınlatma Metni'),
                 ),

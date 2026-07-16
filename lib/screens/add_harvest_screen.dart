@@ -147,7 +147,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                 children: [
                   // Ürün Seçimi
                   DropdownButtonFormField<ProductModel>(
-                    value: _selectedProduct,
+                    initialValue: _selectedProduct,
                     decoration: const InputDecoration(
                       labelText: 'Ürün Seçiniz',
                       prefixIcon: Icon(Icons.eco),
@@ -222,7 +222,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                                   : Colors.grey,
                             ),
                             value: _useCustomPrice,
-                            activeColor: Colors.orange,
+                            activeThumbColor: Colors.orange,
                             onChanged: (value) {
                               setState(() {
                                 _useCustomPrice = value;
@@ -453,4 +453,3 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
     );
   }
 }
-

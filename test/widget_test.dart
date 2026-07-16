@@ -22,7 +22,13 @@ void main() {
 
   testWidgets('App loads successfully', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const HalFiyatApp());
+    await tester.pumpWidget(
+      HalFiyatApp(
+        dependencies: AppDependencies.supabase(
+          client: Supabase.instance.client,
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     // Verify that the app loads

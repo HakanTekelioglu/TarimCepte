@@ -60,6 +60,27 @@ alter table public.users add column if not exists email text;
 alter table public.users add column if not exists auth_migrated_at timestamptz;
 create unique index if not exists users_phone_number_key on public.users(phone_number);
 
+create or replace function public.login_email_for_phone(
+  phone_candidates text[]
+)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select lower(trim(u.email))
+  from public.users as u
+  where u.phone_number = any(phone_candidates)
+    and nullif(trim(u.email), '') is not null
+  order by array_position(phone_candidates, u.phone_number)
+  limit 1;
+$$;
+
+revoke all on function public.login_email_for_phone(text[]) from public;
+grant execute on function public.login_email_for_phone(text[]) to anon;
+grant execute on function public.login_email_for_phone(text[]) to authenticated;
+
 alter table public.users
   drop constraint if exists users_id_auth_fkey;
 

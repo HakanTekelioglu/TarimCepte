@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,9 +10,16 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
   try {
-     final res = await Supabase.instance.client.from('product_prices').select().limit(1);
-     print("Prices: \$res");
+    final res = await Supabase.instance.client
+        .from('product_prices')
+        .select()
+        .limit(1);
+    developer.log('Prices: $res', name: 'SupabaseConnectionTest');
   } catch (e) {
-     print("Error: \$e");
+    developer.log(
+      'Product prices query failed.',
+      name: 'SupabaseConnectionTest',
+      error: e,
+    );
   }
 }

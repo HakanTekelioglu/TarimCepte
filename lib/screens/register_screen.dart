@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../domain/auth/turkish_phone_number.dart';
 import '../providers/providers.dart';
 import '../utils/app_constants.dart';
 import 'registration_verification_screen.dart';
@@ -23,24 +24,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String _selectedCity = AppConstants.cities.first;
   String? _selectedDistrict;
-
-  String _normalizePhoneNumber(String value) {
-    final cleaned = value.replaceAll(RegExp(r'[^0-9+]'), '');
-
-    if (cleaned.startsWith('+')) {
-      return cleaned;
-    }
-
-    if (cleaned.startsWith('90')) {
-      return '+$cleaned';
-    }
-
-    if (cleaned.startsWith('0')) {
-      return '+90${cleaned.substring(1)}';
-    }
-
-    return '+90$cleaned';
-  }
 
   @override
   void initState() {
@@ -71,7 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.register(
-      _normalizePhoneNumber(_phoneController.text.trim()),
+      TurkishPhoneNumber.normalize(_phoneController.text),
       _passwordController.text,
       _nameController.text.trim(),
       email: _emailController.text.trim(),
@@ -85,8 +68,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           builder:
               (_) => RegistrationVerificationScreen(
                 email: _emailController.text.trim(),
-                phoneNumber: _normalizePhoneNumber(
-                  _phoneController.text.trim(),
+                phoneNumber: TurkishPhoneNumber.normalize(
+                  _phoneController.text,
                 ),
                 password: _passwordController.text,
                 fullName: _nameController.text.trim(),
@@ -247,7 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<String>(
-                  value: _selectedCity,
+                  initialValue: _selectedCity,
                   decoration: const InputDecoration(
                     labelText: 'Şehir Seçimi',
                     prefixIcon: Icon(Icons.location_city),
@@ -282,7 +265,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: DropdownButtonFormField<String>(
-                    value:
+                    key: ValueKey(_selectedDistrict),
+                    initialValue:
                         distList.contains(_selectedDistrict)
                             ? _selectedDistrict
                             : null,

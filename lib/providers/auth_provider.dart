@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
-import '../services/services.dart';
+import '../services/contracts/auth_service_contract.dart';
 
 /// Kimlik doğrulama state yönetimi
 class AuthProvider extends ChangeNotifier {
@@ -9,8 +9,8 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  AuthProvider({IAuthService? authService})
-    : _authService = authService ?? LocalAuthService();
+  AuthProvider({required IAuthService authService})
+    : _authService = authService;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -52,7 +52,7 @@ class AuthProvider extends ChangeNotifier {
         rememberMe: rememberMe,
       );
       if (_currentUser == null) {
-        _error = 'Telefon numarası veya şifre hatalı';
+        _error = 'Telefon/e-posta veya şifre hatalı';
       }
     } catch (e) {
       _error = e.toString();

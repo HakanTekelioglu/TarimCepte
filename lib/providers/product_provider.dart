@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
-import '../services/services.dart';
+import '../services/contracts/product_service_contract.dart';
 
 /// Ürün state yönetimi
 class ProductProvider extends ChangeNotifier {
@@ -12,8 +12,8 @@ class ProductProvider extends ChangeNotifier {
   String? selectedDistrict;
   int _locationRequestId = 0;
 
-  ProductProvider({IProductService? productService})
-    : _productService = productService ?? LocalProductService();
+  ProductProvider({required IProductService productService})
+    : _productService = productService;
 
   List<ProductModel> get products => _products;
   bool get isLoading => _isLoading;

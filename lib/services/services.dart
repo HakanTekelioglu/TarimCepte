@@ -1,3 +1,7 @@
+export 'contracts/auth_service_contract.dart';
+export 'contracts/harvest_service_contract.dart';
+export 'contracts/product_service_contract.dart';
+export 'contracts/season_service_contract.dart';
 export 'auth_service.dart';
 export 'auth_session_policy.dart';
 export 'product_service.dart';

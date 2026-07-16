@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hal_fiyat/infrastructure/storage/shared_preferences_auth_session_store.dart';
 import 'package:hal_fiyat/services/auth_session_policy.dart';
 import 'package:hal_fiyat/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,7 +54,9 @@ void main() {
     });
 
     test('restores and renews a remembered session before 48 hours', () async {
-      final service = LocalAuthService();
+      final service = LocalAuthService(
+        sessionStore: SharedPreferencesAuthSessionStore(),
+      );
       final user = await service.login(phoneNumber, password, rememberMe: true);
       final prefs = await SharedPreferences.getInstance();
       final previousActivity = DateTime.now().toUtc().subtract(
@@ -76,7 +79,9 @@ void main() {
     });
 
     test('clears a remembered session after 48 hours', () async {
-      final service = LocalAuthService();
+      final service = LocalAuthService(
+        sessionStore: SharedPreferencesAuthSessionStore(),
+      );
       await service.login(phoneNumber, password, rememberMe: true);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
@@ -95,7 +100,9 @@ void main() {
     });
 
     test('does not restore an unremembered session after restart', () async {
-      final service = LocalAuthService();
+      final service = LocalAuthService(
+        sessionStore: SharedPreferencesAuthSessionStore(),
+      );
       await service.login(phoneNumber, password);
 
       expect(await service.getCurrentUser(), isNotNull);

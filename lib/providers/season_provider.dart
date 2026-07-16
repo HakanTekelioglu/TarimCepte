@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
-import '../services/services.dart';
+import '../services/contracts/season_service_contract.dart';
 
 /// Sezon state yönetimi
 class SeasonProvider extends ChangeNotifier {
@@ -10,8 +10,8 @@ class SeasonProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  SeasonProvider({ISeasonService? seasonService})
-      : _seasonService = seasonService ?? LocalSeasonService();
+  SeasonProvider({required ISeasonService seasonService})
+    : _seasonService = seasonService;
 
   List<SeasonModel> get seasons => _seasons;
   SeasonModel? get activeSeason => _activeSeason;
@@ -97,7 +97,7 @@ class SeasonProvider extends ChangeNotifier {
   Future<void> endSeason(String seasonId) async {
     try {
       await _seasonService.endSeason(seasonId);
-      
+
       final index = _seasons.indexWhere((s) => s.id == seasonId);
       if (index != -1) {
         _seasons[index] = _seasons[index].copyWith(
@@ -119,14 +119,14 @@ class SeasonProvider extends ChangeNotifier {
   /// Aktif sezonu yenile (güncel toplamlar için)
   Future<void> refreshActiveSeason(String userId) async {
     _activeSeason = await _seasonService.getActiveSeasonByUserId(userId);
-    
+
     if (_activeSeason != null) {
       final index = _seasons.indexWhere((s) => s.id == _activeSeason!.id);
       if (index != -1) {
         _seasons[index] = _activeSeason!;
       }
     }
-    
+
     notifyListeners();
   }
 

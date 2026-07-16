@@ -67,7 +67,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        value: currentCity,
+                        initialValue: currentCity,
                         decoration: const InputDecoration(labelText: 'İl'),
                         items: AppConstants.cities.map((String c) {
                           return DropdownMenuItem<String>(
@@ -95,7 +95,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     if (districtList.isNotEmpty)
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: districtList.contains(currentDistrict)
+                          key: ValueKey(currentDistrict),
+                          initialValue: districtList.contains(currentDistrict)
                               ? currentDistrict
                               : null,
                           decoration: const InputDecoration(labelText: 'İlçe'),

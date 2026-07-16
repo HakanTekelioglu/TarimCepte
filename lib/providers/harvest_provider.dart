@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/models.dart';
-import '../services/services.dart';
+import '../services/contracts/harvest_service_contract.dart';
+import '../services/contracts/season_service_contract.dart';
 
 /// Hasat state yönetimi
 class HarvestProvider extends ChangeNotifier {
@@ -11,10 +12,10 @@ class HarvestProvider extends ChangeNotifier {
   String? _error;
 
   HarvestProvider({
-    IHarvestService? harvestService,
-    ISeasonService? seasonService,
-  })  : _harvestService = harvestService ?? LocalHarvestService(),
-        _seasonService = seasonService ?? LocalSeasonService();
+    required IHarvestService harvestService,
+    required ISeasonService seasonService,
+  }) : _harvestService = harvestService,
+       _seasonService = seasonService;
 
   List<HarvestModel> get harvests => _harvests;
   bool get isLoading => _isLoading;
@@ -139,8 +140,9 @@ class HarvestProvider extends ChangeNotifier {
   /// Tarihe göre hasatları filtrele
   List<HarvestModel> getHarvestsByDateRange(DateTime start, DateTime end) {
     return _harvests
-        .where((h) =>
-            h.harvestDate.isAfter(start) && h.harvestDate.isBefore(end))
+        .where(
+          (h) => h.harvestDate.isAfter(start) && h.harvestDate.isBefore(end),
+        )
         .toList();
   }
 
