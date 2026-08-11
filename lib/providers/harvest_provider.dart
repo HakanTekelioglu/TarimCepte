@@ -83,6 +83,7 @@ class HarvestProvider extends ChangeNotifier {
     required String seasonId,
     String? notes,
   }) async {
+    _error = null;
     try {
       final harvest = HarvestModel(
         id: '',
@@ -113,11 +114,13 @@ class HarvestProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = e.toString();
+      notifyListeners();
     }
   }
 
   /// Hasat sil
   Future<void> deleteHarvest(String id) async {
+    _error = null;
     try {
       final deletedHarvest = await _harvestService.deleteHarvest(id);
       _harvests.removeWhere((h) => h.id == id);
@@ -129,6 +132,7 @@ class HarvestProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = e.toString();
+      notifyListeners();
     }
   }
 

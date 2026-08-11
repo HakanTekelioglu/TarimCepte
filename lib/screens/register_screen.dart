@@ -88,263 +88,296 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Kayıt Ol')),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // İsim alanı
-                TextFormField(
-                  controller: _nameController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Ad Soyad',
-                    prefixIcon: Icon(Icons.person_outline),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Ad soyad giriniz';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(
-                    labelText: 'E-posta',
-                    hintText: 'ornek@mail.com',
-                    prefixIcon: Icon(Icons.mail_outline),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    final email = value?.trim() ?? '';
-                    if (email.isEmpty) {
-                      return 'E-posta giriniz';
-                    }
-                    final isValid = RegExp(
-                      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                    ).hasMatch(email);
-                    if (!isValid) {
-                      return 'Geçerli bir e-posta giriniz';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Telefon alanı
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Telefon Numarası',
-                    hintText: '05XXXXXXXXX',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Telefon numarası giriniz';
-                    }
-                    final digitCount =
-                        value.replaceAll(RegExp(r'[^0-9]'), '').length;
-                    if (digitCount < 10) {
-                      return 'Geçerli bir telefon numarası giriniz';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Şifre alanı
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Şifre',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.all(24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Hesabınızı Oluşturun',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'İletişim ve bölge bilgilerinizi girerek hasatlarınızı takip etmeye başlayın.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
+                    ),
+                    const SizedBox(height: 24),
+                    // İsim alanı
+                    TextFormField(
+                      controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: const InputDecoration(
+                        labelText: 'Ad Soyad',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ad soyad giriniz';
+                        }
+                        return null;
                       },
                     ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Şifre giriniz';
-                    }
-                    if (value.length < 6) {
-                      return 'Şifre en az 6 karakter olmalı';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                // Şifre tekrar alanı
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Şifre Tekrar',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.email],
+                      decoration: const InputDecoration(
+                        labelText: 'E-posta',
+                        hintText: 'ornek@mail.com',
+                        prefixIcon: Icon(Icons.mail_outline),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
+                      validator: (value) {
+                        final email = value?.trim() ?? '';
+                        if (email.isEmpty) {
+                          return 'E-posta giriniz';
+                        }
+                        final isValid = RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(email);
+                        if (!isValid) {
+                          return 'Geçerli bir e-posta giriniz';
+                        }
+                        return null;
                       },
                     ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Şifreyi tekrar giriniz';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Şifreler eşleşmiyor';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                DropdownButtonFormField<String>(
-                  initialValue: _selectedCity,
-                  decoration: const InputDecoration(
-                    labelText: 'Şehir Seçimi',
-                    prefixIcon: Icon(Icons.location_city),
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Şehir seçiniz';
-                    }
-                    return null;
-                  },
-                  items:
-                      AppConstants.cities.map((String c) {
-                        return DropdownMenuItem<String>(
-                          value: c,
-                          child: Text(c),
-                        );
-                      }).toList(),
-                  onChanged: (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _selectedCity = newValue;
-                        final dList =
-                            AppConstants.cityDistricts[newValue] ?? [];
-                        _selectedDistrict =
-                            dList.isNotEmpty ? dList.first : null;
-                      });
-                    }
-                  },
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: DropdownButtonFormField<String>(
-                    key: ValueKey(_selectedDistrict),
-                    initialValue:
-                        distList.contains(_selectedDistrict)
-                            ? _selectedDistrict
-                            : null,
-                    decoration: const InputDecoration(
-                      labelText: 'İlçe Seçimi',
-                      prefixIcon: Icon(Icons.map),
-                      border: OutlineInputBorder(),
+                    // Telefon alanı
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Telefon Numarası',
+                        hintText: '05XXXXXXXXX',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Telefon numarası giriniz';
+                        }
+                        final digitCount =
+                            value.replaceAll(RegExp(r'[^0-9]'), '').length;
+                        if (digitCount < 10) {
+                          return 'Geçerli bir telefon numarası giriniz';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'İlçe seçiniz';
-                      }
-                      return null;
-                    },
-                    items:
-                        distList.map((String d) {
-                          return DropdownMenuItem<String>(
-                            value: d,
-                            child: Text(d),
-                          );
-                        }).toList(),
-                    onChanged:
-                        distList.isEmpty
-                            ? null
-                            : (String? newValue) {
-                              if (newValue != null) {
-                                setState(() {
-                                  _selectedDistrict = newValue;
-                                });
-                              }
-                            },
-                  ),
-                ),
+                    const SizedBox(height: 16),
 
-                const SizedBox(height: 24),
-
-                // Hata mesajı
-                Consumer<AuthProvider>(
-                  builder: (context, auth, _) {
-                    if (auth.error != null) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          auth.error!,
-                          style: const TextStyle(color: Colors.red),
-                          textAlign: TextAlign.center,
+                    // Şifre alanı
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Şifre',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          tooltip:
+                              _obscurePassword
+                                  ? 'Şifreyi göster'
+                                  : 'Şifreyi gizle',
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
                         ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-
-                // Kayıt butonu
-                Consumer<AuthProvider>(
-                  builder: (context, auth, _) {
-                    return ElevatedButton(
-                      onPressed: auth.isLoading ? null : _handleRegister,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child:
-                          auth.isLoading
-                              ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : const Text(
-                                'Kayıt Ol',
-                                style: TextStyle(fontSize: 16),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Şifre giriniz';
+                        }
+                        if (value.length < 6) {
+                          return 'Şifre en az 6 karakter olmalı';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Şifre tekrar alanı
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmPassword,
+                      decoration: InputDecoration(
+                        labelText: 'Şifre Tekrar',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          tooltip:
+                              _obscureConfirmPassword
+                                  ? 'Şifreyi göster'
+                                  : 'Şifreyi gizle',
+                          icon: Icon(
+                            _obscureConfirmPassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword;
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Şifreyi tekrar giriniz';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Şifreler eşleşmiyor';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedCity,
+                      decoration: const InputDecoration(
+                        labelText: 'Şehir Seçimi',
+                        prefixIcon: Icon(Icons.location_city),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Şehir seçiniz';
+                        }
+                        return null;
+                      },
+                      items:
+                          AppConstants.cities.map((String c) {
+                            return DropdownMenuItem<String>(
+                              value: c,
+                              child: Text(c),
+                            );
+                          }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedCity = newValue;
+                            final dList =
+                                AppConstants.cityDistricts[newValue] ?? [];
+                            _selectedDistrict =
+                                dList.isNotEmpty ? dList.first : null;
+                          });
+                        }
+                      },
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: DropdownButtonFormField<String>(
+                        key: ValueKey(_selectedDistrict),
+                        initialValue:
+                            distList.contains(_selectedDistrict)
+                                ? _selectedDistrict
+                                : null,
+                        decoration: const InputDecoration(
+                          labelText: 'İlçe Seçimi',
+                          prefixIcon: Icon(Icons.map),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'İlçe seçiniz';
+                          }
+                          return null;
+                        },
+                        items:
+                            distList.map((String d) {
+                              return DropdownMenuItem<String>(
+                                value: d,
+                                child: Text(d),
+                              );
+                            }).toList(),
+                        onChanged:
+                            distList.isEmpty
+                                ? null
+                                : (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _selectedDistrict = newValue;
+                                    });
+                                  }
+                                },
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Hata mesajı
+                    Consumer<AuthProvider>(
+                      builder: (context, auth, _) {
+                        if (auth.error != null) {
+                          final colors = Theme.of(context).colorScheme;
+                          return Semantics(
+                            liveRegion: true,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 16),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: colors.errorContainer,
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                    );
-                  },
+                              child: Text(
+                                auth.error!,
+                                style: TextStyle(
+                                  color: colors.onErrorContainer,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+
+                    // Kayıt butonu
+                    Consumer<AuthProvider>(
+                      builder: (context, auth, _) {
+                        return FilledButton.icon(
+                          onPressed: auth.isLoading ? null : _handleRegister,
+                          icon:
+                              auth.isLoading
+                                  ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : const Icon(Icons.person_add_outlined),
+                          label: Text(
+                            auth.isLoading
+                                ? 'Hesap Oluşturuluyor…'
+                                : 'Kayıt Ol',
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

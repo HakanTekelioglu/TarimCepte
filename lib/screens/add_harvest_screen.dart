@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../utils/formatters.dart';
-import '../utils/app_constants.dart';
-import '../providers/providers.dart';
+
 import '../models/models.dart';
+import '../providers/providers.dart';
+import '../utils/app_constants.dart';
+import '../utils/formatters.dart';
+import '../widgets/app_ui.dart';
 
 class AddHarvestScreen extends StatefulWidget {
   const AddHarvestScreen({super.key});
@@ -20,31 +22,8 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
   final _customPriceController = TextEditingController();
 
   bool _useCustomPrice = false;
-
+  bool _isSaving = false;
   ProductModel? _selectedProduct;
-
-  void _loadProductsForUserLocation() {
-    final authProvider = context.read<AuthProvider>();
-    final productProvider = context.read<ProductProvider>();
-    final user = authProvider.currentUser;
-
-    final city = user?.city ?? AppConstants.cities.first;
-    final district = AppConstants.normalizeDistrict(city, user?.district);
-
-    if (productProvider.selectedCity != city ||
-        productProvider.selectedDistrict != district ||
-        productProvider.products.isEmpty) {
-      productProvider.loadProductsByLocation(city, district);
-    }
-  }
-
-  /// Aktif fiyatı döndürür: Özel fiyat açıksa kullanıcının girdiği fiyat, kapalıysa admin fiyatı
-  double get _activePrice {
-    if (_useCustomPrice) {
-      return double.tryParse(_customPriceController.text) ?? 0;
-    }
-    return _selectedProduct?.pricePerKg ?? 0;
-  }
 
   @override
   void initState() {
@@ -61,392 +40,549 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
     super.dispose();
   }
 
+  double? _parseDecimal(String value) {
+    return double.tryParse(value.trim().replaceAll(',', '.'));
+  }
+
+  double get _activePrice {
+    if (_useCustomPrice) {
+      return _parseDecimal(_customPriceController.text) ?? 0;
+    }
+    return _selectedProduct?.pricePerKg ?? 0;
+  }
+
   double get _calculatedGross {
-    if (_selectedProduct == null) return 0;
-    final kg = double.tryParse(_totalKgController.text) ?? 0;
+    final kg = _parseDecimal(_totalKgController.text) ?? 0;
     return kg * _activePrice;
   }
 
   double get _calculatedCommission {
-    final seasonProvider = context.read<SeasonProvider>();
-    final rate = seasonProvider.activeSeason?.commissionRate ?? 8.0;
+    final rate =
+        context.read<SeasonProvider>().activeSeason?.commissionRate ?? 8.0;
     return _calculatedGross * (rate / 100);
   }
 
-  double get _calculatedNet {
-    return _calculatedGross - _calculatedCommission;
+  double get _calculatedNet => _calculatedGross - _calculatedCommission;
+
+  Future<void> _loadProductsForUserLocation() async {
+    final authProvider = context.read<AuthProvider>();
+    final productProvider = context.read<ProductProvider>();
+    final user = authProvider.currentUser;
+    final city = user?.city ?? AppConstants.cities.first;
+    final district = AppConstants.normalizeDistrict(city, user?.district);
+
+    if (productProvider.selectedCity != city ||
+        productProvider.selectedDistrict != district ||
+        productProvider.products.isEmpty) {
+      await productProvider.loadProductsByLocation(city, district);
+    }
   }
 
   Future<void> _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedProduct == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen ürün seçiniz')),
-      );
-      return;
-    }
+    if (_isSaving || !_formKey.currentState!.validate()) return;
+    if (_selectedProduct == null) return;
 
     final authProvider = context.read<AuthProvider>();
     final seasonProvider = context.read<SeasonProvider>();
     final harvestProvider = context.read<HarvestProvider>();
+    final user = authProvider.currentUser;
+    final season = seasonProvider.activeSeason;
 
-    if (authProvider.currentUser == null || seasonProvider.activeSeason == null) {
+    if (user == null || season == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hasat eklemek için aktif bir sezon gerekiyor.'),
+        ),
+      );
       return;
     }
 
-    final priceToUse = _useCustomPrice
-        ? double.parse(_customPriceController.text)
-        : _selectedProduct!.pricePerKg;
+    setState(() => _isSaving = true);
+    final price =
+        _useCustomPrice
+            ? _parseDecimal(_customPriceController.text)!
+            : _selectedProduct!.pricePerKg;
 
     await harvestProvider.addHarvest(
-      userId: authProvider.currentUser!.id,
+      userId: user.id,
       productId: _selectedProduct!.id,
       productName: _selectedProduct!.name,
       crateCount: int.parse(_crateCountController.text),
-      totalKg: double.parse(_totalKgController.text),
-      pricePerKg: priceToUse,
-      commissionRate: seasonProvider.activeSeason!.commissionRate,
-      seasonId: seasonProvider.activeSeason!.id,
-      notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+      totalKg: _parseDecimal(_totalKgController.text)!,
+      pricePerKg: price,
+      commissionRate: season.commissionRate,
+      seasonId: season.id,
+      notes:
+          _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
     );
 
-    // Sezon toplamlarını güncelle
-    await seasonProvider.refreshActiveSeason(authProvider.currentUser!.id);
+    await seasonProvider.refreshActiveSeason(user.id);
+    if (!mounted) return;
+    setState(() => _isSaving = false);
 
-    if (mounted) {
+    if (harvestProvider.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hasat başarıyla kaydedildi!'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: Text(
+            'Hasat kaydedilemedi. Lütfen bağlantınızı kontrol edip tekrar deneyin.',
+          ),
         ),
       );
-      Navigator.of(context).pop();
+      return;
     }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${_selectedProduct!.name} hasadı kaydedildi.')),
+    );
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hasat Ekle'),
-      ),
-      body: Consumer<ProductProvider>(
-        builder: (context, productProvider, _) {
-          if (productProvider.isLoading) {
+      appBar: AppBar(title: const Text('Yeni Hasat')),
+      body: Consumer2<ProductProvider, SeasonProvider>(
+        builder: (context, productProvider, seasonProvider, _) {
+          if (productProvider.isLoading && productProvider.products.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final products = productProvider.products;
+          if (productProvider.error != null &&
+              productProvider.products.isEmpty) {
+            return AppErrorState(
+              message: productProvider.error!,
+              onRetry: _loadProductsForUserLocation,
+            );
+          }
+
+          if (productProvider.products.isEmpty) {
+            return const AppEmptyState(
+              icon: Icons.inventory_2_outlined,
+              title: 'Bu bölgede ürün bulunamadı',
+              message:
+                  'Hasat ekleyebilmek için seçili bölgeye ait en az bir ürün gerekiyor.',
+            );
+          }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Ürün Seçimi
-                  DropdownButtonFormField<ProductModel>(
-                    initialValue: _selectedProduct,
-                    decoration: const InputDecoration(
-                      labelText: 'Ürün Seçiniz',
-                      prefixIcon: Icon(Icons.eco),
-                      border: OutlineInputBorder(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: AppContent(
+              maxWidth: 760,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSeasonBanner(context, seasonProvider),
+                    const SizedBox(height: 16),
+                    _buildProductAndPriceCard(
+                      context,
+                      productProvider.products,
                     ),
-                    items: products.map((product) {
-                      return DropdownMenuItem(
-                        value: product,
-                        child: Text(
-                          '${product.name} (₺${product.pricePerKg.toPriceString(2)}/kg)',
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (product) {
-                      setState(() {
-                        _selectedProduct = product;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Ürün seçiniz';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Özel Fiyat Girişi
-                  Card(
-                    color: _useCustomPrice
-                        ? Colors.orange.shade50
-                        : Colors.grey[50],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: _useCustomPrice
-                            ? Colors.orange.shade300
-                            : Colors.grey.shade300,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text(
-                              'Özel Fiyat Kullan',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                            subtitle: Text(
-                              _useCustomPrice
-                                  ? 'Kendi fiyatınızı giriyorsunuz'
-                                  : 'Güncel hal fiyatı kullanılıyor',
-                              style: TextStyle(
-                                color: _useCustomPrice
-                                    ? Colors.orange.shade700
-                                    : Colors.grey.shade600,
-                                fontSize: 12,
-                              ),
-                            ),
-                            secondary: Icon(
-                              _useCustomPrice
-                                  ? Icons.edit_note
-                                  : Icons.store,
-                              color: _useCustomPrice
-                                  ? Colors.orange
-                                  : Colors.grey,
-                            ),
-                            value: _useCustomPrice,
-                            activeThumbColor: Colors.orange,
-                            onChanged: (value) {
-                              setState(() {
-                                _useCustomPrice = value;
-                                if (!value) {
-                                  _customPriceController.clear();
-                                }
-                              });
-                            },
-                          ),
-                          if (_useCustomPrice) ...[
-                            const SizedBox(height: 8),
-                            TextFormField(
-                              controller: _customPriceController,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              style: TextStyle(
-                                color: Colors.orange.shade900,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              decoration: InputDecoration(
-                                labelText: 'Kilogram Fiyatı (₺)',
-                                labelStyle: TextStyle(
-                                  color: Colors.orange.shade700,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                hintText: _selectedProduct != null
-                                    ? 'Güncel fiyat: ₺${_selectedProduct!.pricePerKg.toPriceString(2)}'
-                                    : 'Fiyat giriniz',
-                                hintStyle: TextStyle(
-                                  color: Colors.orange.shade400,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.currency_lira,
-                                  color: Colors.orange,
-                                ),
-                                border: const OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.orange.shade400,
-                                    width: 2,
-                                  ),
-                                ),
-                                suffixText: '₺/kg',
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              validator: (value) {
-                                if (!_useCustomPrice) return null;
-                                if (value == null || value.isEmpty) {
-                                  return 'Özel fiyat giriniz';
-                                }
-                                if (double.tryParse(value) == null ||
-                                    double.parse(value) <= 0) {
-                                  return 'Geçerli bir fiyat giriniz';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '💡 Hasatı geç giriyorsanız veya farklı bir fiyattan satış yaptıysanız buraya kendi fiyatınızı yazabilirsiniz.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.orange.shade600,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Sandık Sayısı
-                  TextFormField(
-                    controller: _crateCountController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Sandık Sayısı',
-                      prefixIcon: Icon(Icons.inventory_2),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Sandık sayısı giriniz';
-                      }
-                      if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                        return 'Geçerli bir sayı giriniz';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Toplam Kg
-                  TextFormField(
-                    controller: _totalKgController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Toplam Kilogram',
-                      prefixIcon: Icon(Icons.scale),
-                      border: OutlineInputBorder(),
-                      suffixText: 'kg',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Toplam kg giriniz';
-                      }
-                      if (double.tryParse(value) == null ||
-                          double.parse(value) <= 0) {
-                        return 'Geçerli bir değer giriniz';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Notlar (Opsiyonel)
-                  TextFormField(
-                    controller: _notesController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Notlar (Opsiyonel)',
-                      prefixIcon: Icon(Icons.note),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Hesaplama Özeti
-                  if (_selectedProduct != null &&
-                      _totalKgController.text.isNotEmpty) ...[
-                    Card(
-                      color: Colors.grey[100],
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Kazanç Hesabı',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const Divider(),
-                            _buildCalculationRow(
-                              _useCustomPrice
-                                  ? 'Kilogram Fiyatı (Özel)'
-                                  : 'Kilogram Fiyatı',
-                              '₺${_activePrice.toPriceString(2)}',
-                              color: _useCustomPrice ? Colors.orange : null,
-                            ),
-                            _buildCalculationRow(
-                              'Brüt Kazanç',
-                              '₺${_calculatedGross.toPriceString(2)}',
-                            ),
-                            Consumer<SeasonProvider>(
-                              builder: (context, season, _) {
-                                return _buildCalculationRow(
-                                  'Komisyon (%${season.activeSeason?.commissionRate.toPriceString(1) ?? '8.0'})',
-                                  '-₺${_calculatedCommission.toPriceString(2)}',
-                                  color: Colors.red,
-                                );
-                              },
-                            ),
-                            const Divider(),
-                            _buildCalculationRow(
-                              'Net Kazanç',
-                              '₺${_calculatedNet.toPriceString(2)}',
-                              isBold: true,
-                              color: Colors.green,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                    _buildAmountCard(context),
+                    const SizedBox(height: 16),
+                    _buildNotesCard(context),
+                    const SizedBox(height: 16),
+                    _buildCalculationCard(context, seasonProvider),
+                    const SizedBox(height: 100),
                   ],
-
-                  // Kaydet Butonu
-                  ElevatedButton(
-                    onPressed: _handleSave,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text(
-                      'Hasatı Kaydet',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           );
         },
       ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+          ),
+          child: Center(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 728),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _isSaving ? null : _handleSave,
+                  icon:
+                      _isSaving
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Icon(Icons.check_rounded),
+                  label: Text(_isSaving ? 'Kaydediliyor…' : 'Hasadı Kaydet'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildCalculationRow(String label, String value,
-      {bool isBold = false, Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+  Widget _buildSeasonBanner(
+    BuildContext context,
+    SeasonProvider seasonProvider,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+    final season = seasonProvider.activeSeason;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer,
+        borderRadius: BorderRadius.circular(18),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          Icon(Icons.calendar_month_outlined, color: colors.onPrimaryContainer),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  season?.name ?? 'Aktif sezon',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: colors.onPrimaryContainer,
+                  ),
+                ),
+                Text(
+                  'Komisyon oranı: %${season?.commissionRate.toPriceString(1) ?? '8,0'}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onPrimaryContainer.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductAndPriceCard(
+    BuildContext context,
+    List<ProductModel> products,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppSectionHeader(
+              title: 'Ürün ve Fiyat',
+              subtitle: 'Hasadın hangi ürün ve fiyatla hesaplanacağını seçin',
+            ),
+            const SizedBox(height: 18),
+            DropdownButtonFormField<ProductModel>(
+              initialValue: _selectedProduct,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Ürün',
+                prefixIcon: Icon(Icons.eco_outlined),
+              ),
+              items:
+                  products
+                      .map(
+                        (product) => DropdownMenuItem(
+                          value: product,
+                          child: Text(
+                            '${product.name}  •  ₺${product.pricePerKg.toPriceString(2)}/kg',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+              onChanged: (product) {
+                setState(() => _selectedProduct = product);
+              },
+              validator: (value) => value == null ? 'Ürün seçiniz' : null,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color:
+                    _useCustomPrice
+                        ? colors.tertiaryContainer.withValues(alpha: 0.5)
+                        : colors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    secondary: Icon(
+                      _useCustomPrice
+                          ? Icons.edit_note_rounded
+                          : Icons.storefront_outlined,
+                    ),
+                    title: const Text(
+                      'Farklı bir fiyat kullan',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      _useCustomPrice
+                          ? 'Girdiğiniz özel fiyat kullanılacak'
+                          : 'Bölgenin güncel hal fiyatı kullanılacak',
+                    ),
+                    value: _useCustomPrice,
+                    onChanged: (value) {
+                      setState(() {
+                        _useCustomPrice = value;
+                        if (!value) _customPriceController.clear();
+                      });
+                    },
+                  ),
+                  AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 180),
+                    crossFadeState:
+                        _useCustomPrice
+                            ? CrossFadeState.showSecond
+                            : CrossFadeState.showFirst,
+                    firstChild: const SizedBox(width: double.infinity),
+                    secondChild: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: TextFormField(
+                        controller: _customPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Özel Kilogram Fiyatı',
+                          hintText:
+                              _selectedProduct == null
+                                  ? 'Fiyat giriniz'
+                                  : 'Güncel: ₺${_selectedProduct!.pricePerKg.toPriceString(2)}',
+                          prefixIcon: const Icon(Icons.currency_lira_rounded),
+                          suffixText: '₺/kg',
+                        ),
+                        onChanged: (_) => setState(() {}),
+                        validator: (value) {
+                          if (!_useCustomPrice) return null;
+                          final price = _parseDecimal(value ?? '');
+                          if (price == null || price <= 0) {
+                            return 'Sıfırdan büyük bir fiyat giriniz';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAmountCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppSectionHeader(
+              title: 'Hasat Miktarı',
+              subtitle: 'Sandık ve toplam kilogram bilgisini girin',
+            ),
+            const SizedBox(height: 18),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final sideBySide = constraints.maxWidth >= 540;
+                final fieldWidth =
+                    sideBySide
+                        ? (constraints.maxWidth - 12) / 2
+                        : constraints.maxWidth;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    SizedBox(
+                      width: fieldWidth,
+                      child: TextFormField(
+                        controller: _crateCountController,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Sandık Sayısı',
+                          hintText: 'Örn. 12',
+                          prefixIcon: Icon(Icons.inventory_2_outlined),
+                          suffixText: 'sandık',
+                        ),
+                        validator: (value) {
+                          final count = int.tryParse((value ?? '').trim());
+                          return count == null || count <= 0
+                              ? 'Geçerli bir sayı giriniz'
+                              : null;
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: fieldWidth,
+                      child: TextFormField(
+                        controller: _totalKgController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Toplam Kilogram',
+                          hintText: 'Örn. 245,5',
+                          prefixIcon: Icon(Icons.scale_outlined),
+                          suffixText: 'kg',
+                        ),
+                        onChanged: (_) => setState(() {}),
+                        validator: (value) {
+                          final kg = _parseDecimal(value ?? '');
+                          return kg == null || kg <= 0
+                              ? 'Geçerli bir miktar giriniz'
+                              : null;
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotesCard(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppSectionHeader(
+              title: 'Not',
+              subtitle: 'İsteğe bağlı açıklama ekleyebilirsiniz',
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _notesController,
+              minLines: 2,
+              maxLines: 4,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Örn. sabah teslim edildi',
+                prefixIcon: Icon(Icons.notes_rounded),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalculationCard(
+    BuildContext context,
+    SeasonProvider seasonProvider,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+    final rate = seasonProvider.activeSeason?.commissionRate ?? 8.0;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Kazanç Özeti',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: colors.onPrimaryContainer),
+          ),
+          const SizedBox(height: 14),
+          _buildCalculationRow(
+            context,
+            _useCustomPrice ? 'Kilogram fiyatı (özel)' : 'Kilogram fiyatı',
+            '₺${_activePrice.toPriceString(2)}',
+          ),
+          _buildCalculationRow(
+            context,
+            'Brüt kazanç',
+            '₺${_calculatedGross.toPriceString(2)}',
+          ),
+          _buildCalculationRow(
+            context,
+            'Komisyon (%${rate.toPriceString(1)})',
+            '-₺${_calculatedCommission.toPriceString(2)}',
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Divider(
+              color: colors.onPrimaryContainer.withValues(alpha: 0.18),
+            ),
+          ),
+          _buildCalculationRow(
+            context,
+            'Net kazanç',
+            '₺${_calculatedNet.toPriceString(2)}',
+            isEmphasized: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalculationRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool isEmphasized = false,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: colors.onPrimaryContainer.withValues(
+                  alpha: isEmphasized ? 1 : 0.72,
+                ),
+                fontWeight: isEmphasized ? FontWeight.w700 : FontWeight.w400,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
           Text(
             value,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: color,
-            ),
+            style: (isEmphasized
+                    ? Theme.of(context).textTheme.titleLarge
+                    : Theme.of(context).textTheme.bodyLarge)
+                ?.copyWith(
+                  color: colors.onPrimaryContainer,
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ],
       ),
