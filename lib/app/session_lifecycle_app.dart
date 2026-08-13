@@ -66,7 +66,7 @@ class _SessionLifecycleAppState extends State<SessionLifecycleApp>
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: _navigatorKey,
-      title: 'Hal Fiyat',
+      title: 'TarımCepte',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

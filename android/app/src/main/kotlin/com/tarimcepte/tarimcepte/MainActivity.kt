@@ -1,4 +1,4 @@
-package com.halfiyat.hal_fiyat
+package com.tarimcepte.tarimcepte
 
 import io.flutter.embedding.android.FlutterActivity
 

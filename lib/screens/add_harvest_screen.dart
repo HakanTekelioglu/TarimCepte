@@ -339,7 +339,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                     subtitle: Text(
                       _useCustomPrice
                           ? 'Girdiğiniz özel fiyat kullanılacak'
-                          : 'Bölgenin güncel hal fiyatı kullanılacak',
+                          : 'Bölgenin güncel ürün fiyatı kullanılacak',
                     ),
                     value: _useCustomPrice,
                     onChanged: (value) {

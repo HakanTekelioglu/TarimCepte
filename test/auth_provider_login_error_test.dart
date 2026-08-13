@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hal_fiyat/models/models.dart';
-import 'package:hal_fiyat/providers/auth_provider.dart';
-import 'package:hal_fiyat/services/contracts/auth_service_contract.dart';
+import 'package:tarimcepte/models/models.dart';
+import 'package:tarimcepte/providers/auth_provider.dart';
+import 'package:tarimcepte/services/contracts/auth_service_contract.dart';
 
 void main() {
   test('giris hatasini teknik Supabase metni olmadan gosterir', () async {

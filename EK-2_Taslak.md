@@ -2,11 +2,11 @@
 
 ## EK-2'nin Amaci
 
-Bu ek bolumde, gelistirilen Hal Fiyat / TarimCepte mobil uygulamasinin teknik yapisi, kullanilan teknolojiler, veritabani altyapisi, uygulama modulleri ve ekran goruntuleri sunulmustur. EK-2, proje raporunda anlatilan sistemin uygulanabilirligini gostermek ve uygulamanin nasil calistigini destekleyici belgelerle aciklamak amaciyla hazirlanmistir.
+Bu ek bolumde, gelistirilen TarimCepte mobil uygulamasinin teknik yapisi, kullanilan teknolojiler, veritabani altyapisi, uygulama modulleri ve ekran goruntuleri sunulmustur. EK-2, proje raporunda anlatilan sistemin uygulanabilirligini gostermek ve uygulamanin nasil calistigini destekleyici belgelerle aciklamak amaciyla hazirlanmistir.
 
 ## 1. Uygulama Hakkinda Genel Bilgi
 
-Hal Fiyat / TarimCepte uygulamasi, ciftcilerin hasat ettikleri urunlerin sandik ve kilogram bilgilerini kaydederek tahmini gelirlerini takip edebilmelerini saglayan bir mobil uygulamadir. Uygulama uzerinden urun fiyatlari goruntulenebilir, hasat kaydi eklenebilir, komisyon orani dikkate alinarak net kazanc hesaplanabilir ve sezon bazli gelir takibi yapilabilir.
+TarimCepte uygulamasi, ciftcilerin hasat ettikleri urunlerin sandik ve kilogram bilgilerini kaydederek tahmini gelirlerini takip edebilmelerini saglayan bir mobil uygulamadir. Uygulama uzerinden urun fiyatlari goruntulenebilir, hasat kaydi eklenebilir, komisyon orani dikkate alinarak net kazanc hesaplanabilir ve sezon bazli gelir takibi yapilabilir.
 
 Uygulama Android ve iOS platformlarinda calisabilecek sekilde Flutter ile gelistirilmistir. Veriler Supabase uzerindeki PostgreSQL veritabaninda tutulmaktadir.
 
@@ -158,4 +158,4 @@ Aktif sezon ve gecmis sezon bilgileri takip edilir.
 
 ## 9. Sonuc
 
-EK-2 kapsaminda sunulan teknik bilgiler ve ekran goruntuleri, Hal Fiyat / TarimCepte uygulamasinin islevsel yapisini desteklemektedir. Uygulama, ciftcilerin urun fiyatlarini takip etmesine, hasat kayitlarini saklamasina ve sezonluk gelirlerini daha duzenli bicimde analiz etmesine yardimci olacak sekilde tasarlanmistir.
+EK-2 kapsaminda sunulan teknik bilgiler ve ekran goruntuleri, TarimCepte uygulamasinin islevsel yapisini desteklemektedir. Uygulama, ciftcilerin urun fiyatlarini takip etmesine, hasat kayitlarini saklamasina ve sezonluk gelirlerini daha duzenli bicimde analiz etmesine yardimci olacak sekilde tasarlanmistir.

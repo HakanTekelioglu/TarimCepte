@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.halfiyat" "\0"
-            VALUE "FileDescription", "hal_fiyat" "\0"
+            VALUE "CompanyName", "com.tarimcepte" "\0"
+            VALUE "FileDescription", "TarımCepte" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "hal_fiyat" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.halfiyat. All rights reserved." "\0"
-            VALUE "OriginalFilename", "hal_fiyat.exe" "\0"
-            VALUE "ProductName", "hal_fiyat" "\0"
+            VALUE "InternalName", "TarimCepte" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.tarimcepte. All rights reserved." "\0"
+            VALUE "OriginalFilename", "TarimCepte.exe" "\0"
+            VALUE "ProductName", "TarımCepte" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

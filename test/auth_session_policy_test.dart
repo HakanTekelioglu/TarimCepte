@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hal_fiyat/infrastructure/storage/shared_preferences_auth_session_store.dart';
-import 'package:hal_fiyat/services/auth_session_policy.dart';
-import 'package:hal_fiyat/services/auth_service.dart';
+import 'package:tarimcepte/infrastructure/storage/shared_preferences_auth_session_store.dart';
+import 'package:tarimcepte/services/auth_session_policy.dart';
+import 'package:tarimcepte/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

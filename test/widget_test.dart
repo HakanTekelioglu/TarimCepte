@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:hal_fiyat/main.dart';
+import 'package:tarimcepte/main.dart';
 
 void main() {
   setUpAll(() async {
@@ -23,7 +23,7 @@ void main() {
   testWidgets('App loads successfully', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(
-      HalFiyatApp(
+      TarimCepteApp(
         dependencies: AppDependencies.supabase(
           client: Supabase.instance.client,
         ),
@@ -32,7 +32,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify that the app loads
-    expect(find.text('Hal Fiyat'), findsWidgets);
+    expect(find.text('TarımCepte'), findsWidgets);
     expect(find.text('Beni hatırla'), findsOneWidget);
   });
 }

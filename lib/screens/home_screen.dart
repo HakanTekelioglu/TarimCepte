@@ -24,7 +24,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   static const _pageTitles = [
     'Genel Bakış',
-    'Hal Fiyatları',
+    'Fiyatlar',
     'Hasat Geçmişi',
     'Sezonlar',
   ];

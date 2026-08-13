@@ -8,10 +8,10 @@ import '../providers/season_provider.dart';
 import 'app_dependencies.dart';
 import 'session_lifecycle_app.dart';
 
-class HalFiyatApp extends StatelessWidget {
+class TarimCepteApp extends StatelessWidget {
   final AppDependencies dependencies;
 
-  const HalFiyatApp({super.key, required this.dependencies});
+  const TarimCepteApp({super.key, required this.dependencies});
 
   @override
   Widget build(BuildContext context) {

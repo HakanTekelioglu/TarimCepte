@@ -1,11 +1,11 @@
--- Hal Fiyat manual backup export
+-- TarımCepte manual backup export
 -- Run this in Supabase SQL Editor, then download/copy the single result row.
 -- It exports the app data needed before public.users -> auth.users migration.
 
 select jsonb_pretty(
   jsonb_build_object(
     'exported_at', now(),
-    'source', 'hal_fiyat_manual_backup',
+    'source', 'tarimcepte_manual_backup',
     'tables', jsonb_build_object(
       'public.users',
         coalesce((select jsonb_agg(to_jsonb(u) order by u.created_at, u.id) from public.users u), '[]'::jsonb),

@@ -95,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Hasatlarınız ve güncel hal fiyatları sizi bekliyor.',
+                                      'Hasatlarınız ve güncel ürün fiyatları sizi bekliyor.',
                                       style: Theme.of(
                                         context,
                                       ).textTheme.bodyMedium?.copyWith(
@@ -340,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 14),
         Text(
-          'Hal Fiyat',
+          'TarımCepte',
           textAlign: TextAlign.center,
           style: Theme.of(
             context,

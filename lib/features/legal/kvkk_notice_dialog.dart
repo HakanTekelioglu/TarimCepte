@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 const String kvkkNoticeText = '''
-Hal Fiyat KVKK Aydınlatma Metni
+TarımCepte KVKK Aydınlatma Metni
 
-6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında, Hal Fiyat uygulamasını kullanırken paylaştığınız kişisel veriler aşağıdaki çerçevede işlenmektedir.
+6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında, TarımCepte uygulamasını kullanırken paylaştığınız kişisel veriler aşağıdaki çerçevede işlenmektedir.
 
 Veri sorumlusu
-Kişisel verileriniz, Hal Fiyat uygulamasının hizmetlerinin sunulması ve yönetilmesi amacıyla uygulama sahibi/veri sorumlusu tarafından işlenir.
+Kişisel verileriniz, TarımCepte uygulamasının hizmetlerinin sunulması ve yönetilmesi amacıyla uygulama sahibi/veri sorumlusu tarafından işlenir.
 
 İşlenen kişisel veriler
 Ad soyad, telefon numarası, şifre, şehir, ilçe, kullanıcı rolü, ürün, sezon, hasat ve fiyat kayıtları ile uygulama kullanımına ilişkin işlem kayıtları işlenebilir.

@@ -4,10 +4,10 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/app_dependencies.dart';
-import 'app/hal_fiyat_app.dart';
+import 'app/tarim_cepte_app.dart';
 
 export 'app/app_dependencies.dart';
-export 'app/hal_fiyat_app.dart';
+export 'app/tarim_cepte_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,5 +37,5 @@ Future<void> main() async {
   final dependencies = AppDependencies.supabase(
     client: Supabase.instance.client,
   );
-  runApp(HalFiyatApp(dependencies: dependencies));
+  runApp(TarimCepteApp(dependencies: dependencies));
 }

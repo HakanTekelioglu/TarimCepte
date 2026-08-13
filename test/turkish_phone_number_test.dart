@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hal_fiyat/domain/auth/turkish_phone_number.dart';
+import 'package:tarimcepte/domain/auth/turkish_phone_number.dart';
 
 void main() {
   group('TurkishPhoneNumber', () {

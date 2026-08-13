@@ -35,7 +35,7 @@ for update to authenticated
 using (true)
 with check (true);
 
--- Hal Fiyat Supabase şeması (MVP)
+-- TarımCepte Supabase şeması (MVP)
 -- Supabase SQL Editor içinde çalıştırın.
 
 create extension if not exists "pgcrypto";

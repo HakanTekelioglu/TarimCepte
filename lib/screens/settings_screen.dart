@@ -242,7 +242,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const ListTile(
                         leading: Icon(Icons.agriculture),
-                        title: Text('Hal Fiyat'),
+                        title: Text('TarımCepte'),
                         subtitle: Text(
                           'Çiftçiler için gelir takip uygulaması. Hasatlarınızı kaydedin, kazançlarınızı takip edin.',
                         ),

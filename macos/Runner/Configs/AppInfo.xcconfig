@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = hal_fiyat
+PRODUCT_NAME = TarimCepte
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.halfiyat.halFiyat
+PRODUCT_BUNDLE_IDENTIFIER = com.tarimcepte.TarimCepte
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.halfiyat. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 com.tarimcepte. All rights reserved.
