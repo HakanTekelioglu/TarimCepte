@@ -69,7 +69,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             children: [
               AppContent(
                 maxWidth: 960,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
                 child: _buildFilters(context, provider, city, district),
               ),
               TabBar(
@@ -135,12 +135,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
     String city,
     String? district,
   ) {
-    final colors = Theme.of(context).colorScheme;
     final districts = AppConstants.cityDistricts[city] ?? [];
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -148,56 +147,52 @@ class _ProductsScreenState extends State<ProductsScreen> {
               children: [
                 const AppTonalIcon(
                   icon: Icons.location_on_outlined,
-                  size: 40,
-                  iconSize: 20,
+                  size: 32,
+                  iconSize: 18,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Bölge ve Ürün Ara',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      Text(
-                        'Fiyatlar seçtiğiniz hal bölgesine göre gösterilir.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'Bölge ve Ürün Ara',
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             LayoutBuilder(
               builder: (context, constraints) {
-                final showSideBySide = constraints.maxWidth >= 540;
+                final showSideBySide = constraints.maxWidth >= 290;
                 final fieldWidth =
                     showSideBySide
-                        ? (constraints.maxWidth - 12) / 2
+                        ? (constraints.maxWidth - 8) / 2
                         : constraints.maxWidth;
                 return Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     SizedBox(
                       width: fieldWidth,
                       child: DropdownButtonFormField<String>(
                         initialValue: city,
                         isExpanded: true,
+                        isDense: true,
                         decoration: const InputDecoration(
                           labelText: 'İl',
-                          prefixIcon: Icon(Icons.location_city_outlined),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
                         ),
                         items:
                             AppConstants.cities
                                 .map(
                                   (item) => DropdownMenuItem(
                                     value: item,
-                                    child: Text(item),
+                                    child: Text(
+                                      item,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 )
                                 .toList(),
@@ -223,16 +218,23 @@ class _ProductsScreenState extends State<ProductsScreen> {
                           initialValue:
                               districts.contains(district) ? district : null,
                           isExpanded: true,
+                          isDense: true,
                           decoration: const InputDecoration(
                             labelText: 'İlçe',
-                            prefixIcon: Icon(Icons.map_outlined),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
                           ),
                           items:
                               districts
                                   .map(
                                     (item) => DropdownMenuItem(
                                       value: item,
-                                      child: Text(item),
+                                      child: Text(
+                                        item,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   )
                                   .toList(),
@@ -253,14 +255,22 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 );
               },
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             TextField(
               controller: _searchController,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                labelText: 'Ürün ara',
-                hintText: 'Örn. domates',
+                isDense: true,
+                hintText: 'Ürün ara',
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
                 prefixIcon: const Icon(Icons.search_rounded),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 42,
+                  minHeight: 42,
+                ),
                 suffixIcon:
                     _query.isEmpty
                         ? null
