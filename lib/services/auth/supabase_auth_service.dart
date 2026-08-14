@@ -6,6 +6,7 @@ import '../auth_session_policy.dart';
 import '../contracts/auth_service_contract.dart';
 import '../supabase_mapper.dart';
 import 'auth_session_store.dart';
+import 'supabase_auth_error_mapper.dart';
 
 /// Supabase ile çalışan Auth servisi
 class SupabaseAuthService implements IAuthService {
@@ -212,13 +213,7 @@ class SupabaseAuthService implements IAuthService {
         },
       );
     } on AuthException catch (e) {
-      final errorText = e.toString().toLowerCase();
-      if (errorText.contains('email_provider_disabled')) {
-        throw Exception(
-          'Supabase Email provider kapali. Authentication > Providers > Email ayarini acmalisiniz.',
-        );
-      }
-      rethrow;
+      throw SupabaseAuthErrorMapper.registration(e);
     }
     final authUser = authResponse.user;
 
@@ -320,13 +315,7 @@ class SupabaseAuthService implements IAuthService {
     try {
       await _client.auth.resend(email: normalizedEmail, type: OtpType.signup);
     } on AuthException catch (e) {
-      final message = e.message.toLowerCase();
-      if (e.statusCode == '429' || message.contains('too many requests')) {
-        throw Exception(
-          'Supabase saatlik e-posta limiti doldu. Lutfen yaklasik 1 saat sonra tekrar deneyin veya Supabase SMTP ayari yapin.',
-        );
-      }
-      throw Exception('Dogrulama kodu tekrar gonderilemedi: ${e.message}');
+      throw SupabaseAuthErrorMapper.resendConfirmation(e);
     }
   }
 

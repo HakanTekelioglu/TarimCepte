@@ -119,6 +119,29 @@ Uygulama artık Supabase tabanlıdır ve tüm veriler (`users`, `products`, `sea
 - SQL Editor'da `supabase/schema.sql` scriptini çalıştırın
 - Project Settings → API bölümünden `SUPABASE_URL` ve `anon` key değerlerini alın
 
+### Kayıt Doğrulama E-postası
+
+Uygulamadaki kayıt ekranı e-postayla gönderilen tek kullanımlık doğrulama
+kodunu bekler. Supabase Dashboard'da aşağıdaki ayarlar gereklidir:
+
+1. Authentication → Sign In / Providers → Email bölümünde e-posta sağlayıcısını
+   ve **Confirm email** seçeneğini açın.
+2. Authentication → Emails → Templates → Confirm signup şablonuna
+   `{{ .Token }}` değişkenini ekleyin. Kullanıcı bu kodu uygulamadaki doğrulama
+   ekranına girer.
+3. Gerçek kullanıcılara e-posta göndermek için Authentication → Emails → SMTP
+   Settings bölümünde özel SMTP'yi etkinleştirin. SMTP sunucusu, portu,
+   kullanıcı adı/parola ve doğrulanmış gönderen adresinin e-posta sağlayıcınızdaki
+   değerlerle aynı olduğundan emin olun.
+4. `Error sending confirmation email` / HTTP 500 hatasında Dashboard → Logs →
+   Auth Logs ile e-posta sağlayıcısının loglarını kontrol edin. Yanlış SMTP
+   parolası, doğrulanmamış gönderen adresi, sağlayıcı IP kısıtlaması veya bozuk
+   Confirm signup şablonu düzeltilmeden uygulama e-postayı gönderemez.
+
+Supabase'in yerleşik e-posta servisi yalnızca geliştirme içindir; ekip üyesi
+olmayan adreslere gönderim kısıtlıdır ve proje genelinde düşük bir saatlik limite
+sahiptir. Üretimde özel SMTP kullanın.
+
 ## 📦 Kullanılan Paketler
 
 | Paket | Açıklama |
