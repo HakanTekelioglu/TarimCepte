@@ -214,15 +214,19 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Komisyon oranını güncelle
-  Future<void> updateCommissionRate(double rate) async {
-    if (_currentUser == null) return;
+  Future<bool> updateCommissionRate(double rate) async {
+    if (_currentUser == null) return false;
 
     try {
       await _authService.updateCommissionRate(rate);
       _currentUser = _currentUser!.copyWith(commissionRate: rate);
+      _error = null;
       notifyListeners();
+      return true;
     } catch (e) {
       _error = e.toString();
+      notifyListeners();
+      return false;
     }
   }
 

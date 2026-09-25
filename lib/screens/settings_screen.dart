@@ -13,52 +13,93 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _commissionController = TextEditingController();
+  final _commissionFocusNode = FocusNode();
+  double? _syncedCommissionRate;
 
   @override
   void initState() {
     super.initState();
     final user = context.read<AuthProvider>().currentUser;
     if (user != null) {
-      _commissionController.text = user.commissionRate.toStringAsFixed(1);
+      _setCommissionField(user.commissionRate);
     }
   }
 
   @override
   void dispose() {
     _commissionController.dispose();
+    _commissionFocusNode.dispose();
     super.dispose();
+  }
+
+  void _setCommissionField(double rate) {
+    _commissionController.text = rate.toStringAsFixed(1);
+    _syncedCommissionRate = rate;
+  }
+
+  void _syncCommissionField(double rate) {
+    if (_commissionFocusNode.hasFocus || _syncedCommissionRate == rate) return;
+    _setCommissionField(rate);
   }
 
   Future<void> _saveCommission(double rate) async {
     final authProvider = context.read<AuthProvider>();
     final seasonProvider = context.read<SeasonProvider>();
+    final previousSeasonRate = seasonProvider.activeSeason?.commissionRate;
 
-    await authProvider.updateCommissionRate(rate);
     final seasonUpdated = await seasonProvider.updateActiveSeasonCommissionRate(
       rate,
     );
 
     if (!mounted) return;
-    if (seasonUpdated) {
+    if (!seasonUpdated) {
+      _setCommissionField(
+        previousSeasonRate ?? authProvider.currentUser?.commissionRate ?? rate,
+      );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            seasonProvider.activeSeason == null
-                ? 'Varsayılan komisyon oranı güncellendi.'
-                : 'Varsayılan ve aktif sezon komisyon oranı güncellendi.',
+            'Aktif sezon komisyonu güncellenemedi. Herhangi bir değişiklik yapılmadı.',
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Kullanıcı komisyonu güncellendi, sezon güncellenemedi. Supabase seasons tablosuna commission_rate kolonu eklenmeli.',
+    final userUpdated = await authProvider.updateCommissionRate(rate);
+    if (!mounted) return;
+
+    if (!userUpdated) {
+      if (previousSeasonRate != null) {
+        await seasonProvider.updateActiveSeasonCommissionRate(
+          previousSeasonRate,
+        );
+      }
+      if (!mounted) return;
+      _setCommissionField(
+        previousSeasonRate ?? authProvider.currentUser?.commissionRate ?? rate,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Komisyon oranı kaydedilemedi. Değişiklik geri alındı.',
+          ),
+          backgroundColor: Colors.orange,
         ),
-        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
+    _setCommissionField(rate);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          seasonProvider.activeSeason == null
+              ? 'Varsayılan komisyon oranı güncellendi.'
+              : 'Varsayılan ve aktif sezon komisyon oranı güncellendi.',
+        ),
+        backgroundColor: Colors.green,
       ),
     );
   }
@@ -76,6 +117,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (user == null) return const SizedBox.shrink();
 
           final activeSeason = seasonProvider.activeSeason;
+          final effectiveCommissionRate =
+              activeSeason?.commissionRate ?? user.commissionRate;
+          _syncCommissionField(effectiveCommissionRate);
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -166,6 +210,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Expanded(
                             child: TextField(
                               controller: _commissionController,
+                              focusNode: _commissionFocusNode,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                     decimal: true,
@@ -207,7 +252,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         runSpacing: 8,
                         children:
                             [5.0, 8.0, 10.0, 12.0, 15.0].map((rate) {
-                              final isSelected = user.commissionRate == rate;
+                              final isSelected =
+                                  effectiveCommissionRate == rate;
                               return ChoiceChip(
                                 label: Text('%$rate'),
                                 selected: isSelected,
