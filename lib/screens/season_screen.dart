@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../utils/formatters.dart';
 import '../providers/providers.dart';
 import '../models/models.dart';
+import '../widgets/app_ui.dart';
 
 class SeasonScreen extends StatelessWidget {
   const SeasonScreen({super.key});
@@ -19,16 +20,18 @@ class SeasonScreen extends StatelessWidget {
         final seasons = seasonProvider.seasons;
 
         return Scaffold(
-          body: seasons.isEmpty
-              ? _buildEmptyState(context, authProvider, seasonProvider)
-              : _buildSeasonList(context, seasons, seasonProvider),
+          body:
+              seasons.isEmpty
+                  ? _buildEmptyState(context, authProvider, seasonProvider)
+                  : _buildSeasonList(context, seasons, seasonProvider),
           floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _showCreateSeasonDialog(
-              context,
-              authProvider,
-              seasonProvider,
-            ),
-            icon: const Icon(Icons.add),
+            onPressed:
+                () => _showCreateSeasonDialog(
+                  context,
+                  authProvider,
+                  seasonProvider,
+                ),
+            icon: const AppIcon(Icons.add),
             label: const Text('Yeni Sezon'),
           ),
         );
@@ -41,24 +44,13 @@ class SeasonScreen extends StatelessWidget {
     AuthProvider authProvider,
     SeasonProvider seasonProvider,
   ) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.calendar_month_outlined,
-            size: 64,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Henüz sezon kaydı yok',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          const Text('Yeni sezon başlatmak için + butonuna tıklayın'),
-        ],
-      ),
+    return AppEmptyState(
+      icon: Icons.calendar_month_outlined,
+      title: 'Henüz sezon kaydı yok',
+      message: 'Hasatları dönemlere ayırmak için ilk sezonunuzu oluşturun.',
+      actionLabel: 'Yeni Sezon Başlat',
+      onAction:
+          () => _showCreateSeasonDialog(context, authProvider, seasonProvider),
     );
   }
 
@@ -73,33 +65,47 @@ class SeasonScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: seasons.length,
       itemBuilder: (context, index) {
+        final colors = Theme.of(context).colorScheme;
         final season = seasons[index];
         final isActive = season.isActive;
         final isEnded = season.endDate != null;
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
+          color:
+              isActive
+                  ? colors.primaryContainer.withValues(alpha: 0.22)
+                  : colors.surfaceContainerLowest,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: isActive
-                ? BorderSide(color: Theme.of(context).primaryColor, width: 2)
-                : BorderSide.none,
+            borderRadius: BorderRadius.circular(18),
+            side: BorderSide(
+              color: isActive ? colors.primary : colors.outlineVariant,
+              width: isActive ? 1.5 : 1,
+            ),
           ),
           child: Column(
             children: [
               ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: isActive ? Colors.green : Colors.grey[300],
-                  child: Icon(
-                    isActive
-                        ? Icons.play_arrow
-                        : (isEnded ? Icons.check : Icons.swap_horiz),
-                    color: isActive ? Colors.white : Colors.grey[600],
-                  ),
+                contentPadding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+                leading: AppTonalIcon(
+                  icon:
+                      isActive
+                          ? Icons.play_arrow_rounded
+                          : (isEnded
+                              ? Icons.check_rounded
+                              : Icons.swap_horiz_rounded),
+                  color: isActive ? colors.primary : colors.onSurfaceVariant,
+                  size: 46,
+                  iconSize: 23,
                 ),
                 title: Row(
                   children: [
-                    Expanded(child: Text(season.name)),
+                    Expanded(
+                      child: Text(
+                        season.name,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
                     if (isActive)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -107,8 +113,8 @@ class SeasonScreen extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(12),
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(999),
                         ),
                         child: const Text(
                           'AKTİF',
@@ -123,40 +129,51 @@ class SeasonScreen extends StatelessWidget {
                 ),
                 subtitle: Text(
                   '${dateFormat.format(season.startDate)}${season.endDate != null ? ' - ${dateFormat.format(season.endDate!)}' : ' - Devam ediyor'}\nKomisyon: %${season.commissionRate.toPriceString(1)}',
+                  style: TextStyle(
+                    color: colors.onSurfaceVariant,
+                    height: 1.35,
+                  ),
                 ),
                 trailing: PopupMenuButton(
-                  itemBuilder: (context) => [
-                    if (!isActive && !isEnded)
-                      const PopupMenuItem(
-                        value: 'activate',
-                        child: Row(
-                          children: [
-                            Icon(Icons.play_circle, color: Colors.green),
-                            SizedBox(width: 8),
-                            Text('Bu Sezona Geç'),
-                          ],
-                        ),
-                      ),
-                    if (!isEnded)
-                      const PopupMenuItem(
-                        value: 'end',
-                        child: Row(
-                          children: [
-                            Icon(Icons.stop, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Sezonu Bitir'),
-                          ],
-                        ),
-                      ),
-                  ],
+                  tooltip: 'Sezon işlemleri',
+                  icon: const AppIcon(Icons.more_vert_rounded),
+                  itemBuilder:
+                      (context) => [
+                        if (!isActive && !isEnded)
+                          const PopupMenuItem(
+                            value: 'activate',
+                            child: Row(
+                              children: [
+                                AppIcon(Icons.play_circle, color: Colors.green),
+                                SizedBox(width: 8),
+                                Text('Bu Sezona Geç'),
+                              ],
+                            ),
+                          ),
+                        if (!isEnded)
+                          const PopupMenuItem(
+                            value: 'end',
+                            child: Row(
+                              children: [
+                                AppIcon(Icons.stop, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('Sezonu Bitir'),
+                              ],
+                            ),
+                          ),
+                      ],
                   onSelected: (value) {
                     if (value == 'activate') {
                       final authProvider = context.read<AuthProvider>();
                       final harvestProvider = context.read<HarvestProvider>();
                       seasonProvider
-                          .setActiveSeason(authProvider.currentUser!.id, season.id)
+                          .setActiveSeason(
+                            authProvider.currentUser!.id,
+                            season.id,
+                          )
                           .then(
-                            (_) => harvestProvider.loadHarvestsBySeason(season.id),
+                            (_) =>
+                                harvestProvider.loadHarvestsBySeason(season.id),
                           );
                     }
                     if (value == 'end') {
@@ -174,6 +191,7 @@ class SeasonScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _buildStatItem(
+                            context,
                             'Hasat',
                             '${season.totalHarvests}',
                             Icons.eco,
@@ -182,6 +200,7 @@ class SeasonScreen extends StatelessWidget {
                         ),
                         Expanded(
                           child: _buildStatItem(
+                            context,
                             'Toplam Kg',
                             season.totalKg.toPriceString(0),
                             Icons.scale,
@@ -195,6 +214,7 @@ class SeasonScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: _buildStatItem(
+                            context,
                             'Brüt Kazanç',
                             '₺${season.totalGrossEarning.toPriceString(0)}',
                             Icons.payments,
@@ -203,6 +223,7 @@ class SeasonScreen extends StatelessWidget {
                         ),
                         Expanded(
                           child: _buildStatItem(
+                            context,
                             'Komisyon',
                             '₺${season.totalCommission.toPriceString(0)}',
                             Icons.remove_circle,
@@ -215,15 +236,17 @@ class SeasonScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: colors.primaryContainer.withValues(alpha: 0.62),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.account_balance_wallet,
-                            color: Theme.of(context).primaryColor,
+                          AppTonalIcon(
+                            icon: Icons.account_balance_wallet_outlined,
+                            color: colors.primary,
+                            size: 34,
+                            iconSize: 18,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -231,7 +254,7 @@ class SeasonScreen extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: Colors.lightGreen[700],
+                              color: colors.onPrimaryContainer,
                             ),
                           ),
                         ],
@@ -248,32 +271,37 @@ class SeasonScreen extends StatelessWidget {
   }
 
   Widget _buildStatItem(
+    BuildContext context,
     String label,
     String value,
     IconData icon,
     Color color,
   ) {
+    final colors = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(icon, size: 20, color: color),
+        AppTonalIcon(icon: icon, size: 32, iconSize: 16, color: color),
         const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
               ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -286,63 +314,70 @@ class SeasonScreen extends StatelessWidget {
   ) {
     final controller = TextEditingController();
     final commissionController = TextEditingController(
-      text: (authProvider.currentUser?.commissionRate ?? 8.0).toStringAsFixed(1),
+      text: (authProvider.currentUser?.commissionRate ?? 8.0).toStringAsFixed(
+        1,
+      ),
     );
     final now = DateTime.now();
     controller.text = '${now.year} ${_getSeasonName(now.month)}';
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Yeni Sezon Başlat'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Sezon Adı',
-                hintText: 'Örn: 2024 İlkbahar',
-                border: OutlineInputBorder(),
-              ),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Yeni Sezon Başlat'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Sezon Adı',
+                    hintText: 'Örn: 2024 İlkbahar',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: commissionController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Sezon Komisyon Oranı (%)',
+                    hintText: 'Örn: 8.0',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: commissionController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Sezon Komisyon Oranı (%)',
-                hintText: 'Örn: 8.0',
-                border: OutlineInputBorder(),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('İptal'),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('İptal'),
+              ElevatedButton(
+                onPressed: () async {
+                  final commissionRate = double.tryParse(
+                    commissionController.text,
+                  );
+                  if (controller.text.isNotEmpty &&
+                      commissionRate != null &&
+                      commissionRate >= 0) {
+                    await seasonProvider.createSeason(
+                      authProvider.currentUser!.id,
+                      controller.text,
+                      commissionRate,
+                    );
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  }
+                },
+                child: const Text('Başlat'),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final commissionRate = double.tryParse(commissionController.text);
-              if (controller.text.isNotEmpty &&
-                  commissionRate != null &&
-                  commissionRate >= 0) {
-                await seasonProvider.createSeason(
-                  authProvider.currentUser!.id,
-                  controller.text,
-                  commissionRate,
-                );
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              }
-            },
-            child: const Text('Başlat'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -353,31 +388,30 @@ class SeasonScreen extends StatelessWidget {
   ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sezonu Bitir'),
-        content: Text(
-          '"${season.name}" sezonunu bitirmek istediğinizden emin misiniz?\n\n'
-          'Sezon sona erdikten sonra bu sezonda yeni hasat ekleyemezsiniz.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('İptal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await seasonProvider.endSeason(season.id);
-              if (context.mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Sezonu Bitir'),
+            content: Text(
+              '"${season.name}" sezonunu bitirmek istediğinizden emin misiniz?\n\n'
+              'Sezon sona erdikten sonra bu sezonda yeni hasat ekleyemezsiniz.',
             ),
-            child: const Text('Bitir'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('İptal'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await seasonProvider.endSeason(season.id);
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Bitir'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 

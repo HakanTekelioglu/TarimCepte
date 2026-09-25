@@ -63,6 +63,8 @@ class AppTheme {
 
     return base.copyWith(
       textTheme: textTheme,
+      iconTheme: IconThemeData(color: scheme.onSurfaceVariant, size: 22),
+      primaryIconTheme: IconThemeData(color: scheme.onPrimary, size: 22),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
@@ -70,6 +72,8 @@ class AppTheme {
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
         surfaceTintColor: Colors.transparent,
+        iconTheme: IconThemeData(color: scheme.onSurface, size: 22),
+        actionsIconTheme: IconThemeData(color: scheme.primary, size: 22),
         titleTextStyle: textTheme.titleLarge?.copyWith(color: scheme.onSurface),
       ),
       cardTheme: CardThemeData(
@@ -91,6 +95,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerLowest,
+        prefixIconColor: scheme.primary,
+        suffixIconColor: scheme.onSurfaceVariant,
         floatingLabelStyle: TextStyle(
           color: scheme.primary,
           fontWeight: FontWeight.w600,
@@ -162,6 +168,9 @@ class AppTheme {
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           minimumSize: const Size(48, 48),
+          foregroundColor: scheme.onSurfaceVariant,
+          hoverColor: scheme.primary.withValues(alpha: 0.08),
+          highlightColor: scheme.primary.withValues(alpha: 0.12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -172,6 +181,15 @@ class AppTheme {
         elevation: 0,
         backgroundColor: scheme.surfaceContainerLowest,
         indicatorColor: scheme.primaryContainer,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          return IconThemeData(
+            size: states.contains(WidgetState.selected) ? 24 : 22,
+            color:
+                states.contains(WidgetState.selected)
+                    ? scheme.onPrimaryContainer
+                    : scheme.onSurfaceVariant,
+          );
+        }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           return textTheme.labelMedium?.copyWith(
             color:

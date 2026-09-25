@@ -174,7 +174,7 @@ class HarvestHistoryScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(item.icon, size: 20, color: colors.primary),
+          AppIcon(item.icon, size: 20, color: colors.primary),
           const SizedBox(width: 9),
           Expanded(
             child: Column(
@@ -256,7 +256,7 @@ class HarvestHistoryScreen extends StatelessWidget {
                     color: colors.errorContainer,
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  child: Icon(
+                  child: AppIcon(
                     Icons.delete_outline,
                     color: colors.onErrorContainer,
                   ),
@@ -264,6 +264,7 @@ class HarvestHistoryScreen extends StatelessWidget {
                 child: Card(
                   child: ExpansionTile(
                     leading: const AppTonalIcon(icon: Icons.eco_outlined),
+                    trailing: const AppIcon(Icons.keyboard_arrow_down_rounded),
                     title: Row(
                       children: [
                         Expanded(
@@ -327,7 +328,7 @@ class HarvestHistoryScreen extends StatelessWidget {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
+                              AppIcon(
                                 Icons.notes_rounded,
                                 size: 19,
                                 color: colors.onSurfaceVariant,
@@ -352,7 +353,7 @@ class HarvestHistoryScreen extends StatelessWidget {
                           style: TextButton.styleFrom(
                             foregroundColor: colors.error,
                           ),
-                          icon: const Icon(Icons.delete_outline),
+                          icon: const AppIcon(Icons.delete_outline),
                           label: const Text('Kaydı Sil'),
                         ),
                       ),
@@ -408,7 +409,7 @@ class HarvestHistoryScreen extends StatelessWidget {
           context: context,
           builder:
               (dialogContext) => AlertDialog(
-                icon: Icon(
+                icon: AppIcon(
                   Icons.delete_outline,
                   color: Theme.of(dialogContext).colorScheme.error,
                 ),

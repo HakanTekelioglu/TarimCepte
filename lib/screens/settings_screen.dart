@@ -1,5 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../widgets/app_icon.dart';
 import '../providers/providers.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -32,8 +34,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final seasonProvider = context.read<SeasonProvider>();
 
     await authProvider.updateCommissionRate(rate);
-    final seasonUpdated =
-        await seasonProvider.updateActiveSeasonCommissionRate(rate);
+    final seasonUpdated = await seasonProvider.updateActiveSeasonCommissionRate(
+      rate,
+    );
 
     if (!mounted) return;
     if (seasonUpdated) {
@@ -64,6 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: const Text('Ayarlar'),
       ),
       body: Consumer2<AuthProvider, SeasonProvider>(
@@ -84,26 +88,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Text(
                         'Profil Bilgileri',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
                       ListTile(
-                        leading: const Icon(Icons.person),
+                        leading: const AppIcon(Icons.person),
                         title: const Text('Ad Soyad'),
                         subtitle: Text(user.fullName),
                         contentPadding: EdgeInsets.zero,
                       ),
                       ListTile(
-                        leading: const Icon(Icons.phone),
+                        leading: const AppIcon(Icons.phone),
                         title: const Text('Telefon'),
                         subtitle: Text(user.phoneNumber),
                         contentPadding: EdgeInsets.zero,
                       ),
                       if (user.isAdmin)
                         ListTile(
-                          leading: const Icon(
+                          leading: const AppIcon(
                             Icons.admin_panel_settings,
                             color: Colors.orange,
                           ),
@@ -142,9 +145,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Text(
                         'Komisyon Ayarları',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -164,9 +166,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           Expanded(
                             child: TextField(
                               controller: _commissionController,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                               decoration: const InputDecoration(
                                 labelText: 'Komisyon Oranı',
                                 suffixText: '%',
@@ -177,8 +180,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           const SizedBox(width: 12),
                           ElevatedButton(
                             onPressed: () async {
-                              final rate =
-                                  double.tryParse(_commissionController.text);
+                              final rate = double.tryParse(
+                                _commissionController.text,
+                              );
                               if (rate != null && rate >= 0 && rate <= 100) {
                                 await _saveCommission(rate);
                               } else {
@@ -201,20 +205,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: [5.0, 8.0, 10.0, 12.0, 15.0].map((rate) {
-                          final isSelected = user.commissionRate == rate;
-                          return ChoiceChip(
-                            label: Text('%$rate'),
-                            selected: isSelected,
-                            onSelected: (selected) async {
-                              if (selected) {
-                                _commissionController.text =
-                                    rate.toStringAsFixed(1);
-                                await _saveCommission(rate);
-                              }
-                            },
-                          );
-                        }).toList(),
+                        children:
+                            [5.0, 8.0, 10.0, 12.0, 15.0].map((rate) {
+                              final isSelected = user.commissionRate == rate;
+                              return ChoiceChip(
+                                label: Text('%$rate'),
+                                selected: isSelected,
+                                onSelected: (selected) async {
+                                  if (selected) {
+                                    _commissionController.text = rate
+                                        .toStringAsFixed(1);
+                                    await _saveCommission(rate);
+                                  }
+                                },
+                              );
+                            }).toList(),
                       ),
                     ],
                   ),
@@ -229,19 +234,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       Text(
                         'Uygulama Hakkında',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
                       const ListTile(
-                        leading: Icon(Icons.info),
+                        leading: AppIcon(Icons.info),
                         title: Text('Versiyon'),
                         subtitle: Text('1.0.0'),
                         contentPadding: EdgeInsets.zero,
                       ),
                       const ListTile(
-                        leading: Icon(Icons.agriculture),
+                        leading: AppIcon(Icons.agriculture),
                         title: Text('TarımCepte'),
                         subtitle: Text(
                           'Çiftçiler için gelir takip uygulaması. Hasatlarınızı kaydedin, kazançlarınızı takip edin.',

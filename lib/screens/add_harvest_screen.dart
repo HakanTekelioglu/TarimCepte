@@ -142,7 +142,10 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Yeni Hasat')),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text('Yeni Hasat'),
+      ),
       body: Consumer2<ProductProvider, SeasonProvider>(
         builder: (context, productProvider, seasonProvider, _) {
           if (productProvider.isLoading && productProvider.products.isEmpty) {
@@ -223,7 +226,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                          : const Icon(Icons.check_rounded),
+                          : const AppIcon(Icons.check_rounded),
                   label: Text(_isSaving ? 'Kaydediliyor…' : 'Hasadı Kaydet'),
                 ),
               ),
@@ -248,7 +251,10 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
       ),
       child: Row(
         children: [
-          Icon(Icons.calendar_month_outlined, color: colors.onPrimaryContainer),
+          AppIcon(
+            Icons.calendar_month_outlined,
+            color: colors.onPrimaryContainer,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -293,9 +299,10 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
             DropdownButtonFormField<ProductModel>(
               initialValue: _selectedProduct,
               isExpanded: true,
+              icon: const AppIcon(Icons.keyboard_arrow_down_rounded),
               decoration: const InputDecoration(
                 labelText: 'Ürün',
-                prefixIcon: Icon(Icons.eco_outlined),
+                prefixIcon: AppIcon(Icons.eco_outlined),
               ),
               items:
                   products
@@ -327,7 +334,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                 children: [
                   SwitchListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    secondary: Icon(
+                    secondary: AppIcon(
                       _useCustomPrice
                           ? Icons.edit_note_rounded
                           : Icons.storefront_outlined,
@@ -369,7 +376,9 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                               _selectedProduct == null
                                   ? 'Fiyat giriniz'
                                   : 'Güncel: ₺${_selectedProduct!.pricePerKg.toPriceString(2)}',
-                          prefixIcon: const Icon(Icons.currency_lira_rounded),
+                          prefixIcon: const AppIcon(
+                            Icons.currency_lira_rounded,
+                          ),
                           suffixText: '₺/kg',
                         ),
                         onChanged: (_) => setState(() {}),
@@ -425,7 +434,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Sandık Sayısı',
                           hintText: 'Örn. 12',
-                          prefixIcon: Icon(Icons.inventory_2_outlined),
+                          prefixIcon: AppIcon(Icons.inventory_2_outlined),
                           suffixText: 'sandık',
                         ),
                         validator: (value) {
@@ -447,7 +456,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Toplam Kilogram',
                           hintText: 'Örn. 245,5',
-                          prefixIcon: Icon(Icons.scale_outlined),
+                          prefixIcon: AppIcon(Icons.scale_outlined),
                           suffixText: 'kg',
                         ),
                         onChanged: (_) => setState(() {}),
@@ -488,7 +497,7 @@ class _AddHarvestScreenState extends State<AddHarvestScreen> {
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
                 hintText: 'Örn. sabah teslim edildi',
-                prefixIcon: Icon(Icons.notes_rounded),
+                prefixIcon: AppIcon(Icons.notes_rounded),
               ),
             ),
           ],

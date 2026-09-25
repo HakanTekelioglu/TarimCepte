@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'app_icon.dart';
+
+export 'app_icon.dart';
+
 class AppContent extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -90,8 +94,9 @@ class AppTonalIcon extends StatelessWidget {
       decoration: BoxDecoration(
         color: resolvedColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(size * 0.34),
+        border: Border.all(color: resolvedColor.withValues(alpha: 0.10)),
       ),
-      child: Icon(icon, size: iconSize, color: resolvedColor),
+      child: AppIcon(icon, size: iconSize, color: resolvedColor),
     );
   }
 }
@@ -142,7 +147,7 @@ class AppEmptyState extends StatelessWidget {
                 const SizedBox(height: 20),
                 FilledButton.icon(
                   onPressed: onAction,
-                  icon: const Icon(Icons.add),
+                  icon: const AppIcon(Icons.add),
                   label: Text(actionLabel!),
                 ),
               ],
@@ -187,7 +192,7 @@ class AppErrorState extends StatelessWidget {
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: onRetry,
-                  icon: const Icon(Icons.refresh),
+                  icon: const AppIcon(Icons.refresh),
                   label: const Text('Tekrar Dene'),
                 ),
               ],

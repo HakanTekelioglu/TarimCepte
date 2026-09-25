@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../widgets/app_icon.dart';
 import '../providers/providers.dart';
 
 enum _ResetStep { email, code, password, done }
@@ -189,7 +191,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Şifre Yenileme')),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text('Şifre Yenileme'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -199,7 +204,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-                Icon(_icon, size: 72, color: Theme.of(context).primaryColor),
+                AppIcon(_icon, size: 72, color: Theme.of(context).primaryColor),
                 const SizedBox(height: 24),
                 Text(
                   _title,
@@ -253,7 +258,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             decoration: const InputDecoration(
               labelText: 'E-posta',
               hintText: 'ornek@mail.com',
-              prefixIcon: Icon(Icons.mail_outline),
+              prefixIcon: AppIcon(Icons.mail_outline),
               border: OutlineInputBorder(),
             ),
             validator: _validateEmail,
@@ -267,7 +272,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               labelText: 'Yenileme Kodu',
-              prefixIcon: Icon(Icons.pin_outlined),
+              prefixIcon: AppIcon(Icons.pin_outlined),
               border: OutlineInputBorder(),
             ),
             validator: _validateCode,
@@ -297,10 +302,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             obscureText: _obscurePassword,
             decoration: InputDecoration(
               labelText: 'Yeni Şifre',
-              prefixIcon: const Icon(Icons.lock_outline),
+              prefixIcon: const AppIcon(Icons.lock_outline),
               border: const OutlineInputBorder(),
               suffixIcon: IconButton(
-                icon: Icon(
+                icon: AppIcon(
                   _obscurePassword
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
@@ -320,10 +325,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
             obscureText: _obscureConfirmPassword,
             decoration: InputDecoration(
               labelText: 'Yeni Şifre Tekrar',
-              prefixIcon: const Icon(Icons.lock_outline),
+              prefixIcon: const AppIcon(Icons.lock_outline),
               border: const OutlineInputBorder(),
               suffixIcon: IconButton(
-                icon: Icon(
+                icon: AppIcon(
                   _obscureConfirmPassword
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,

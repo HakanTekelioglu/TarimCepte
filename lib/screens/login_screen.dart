@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../domain/auth/turkish_phone_number.dart';
 import '../features/legal/kvkk_notice_dialog.dart';
 import '../providers/providers.dart';
+import '../widgets/app_icon.dart';
 import 'home_screen.dart';
 import 'password_reset_screen.dart';
 import 'register_screen.dart';
@@ -116,7 +117,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         labelText: 'Telefon veya E-posta',
                                         hintText:
                                             '05XXXXXXXXX veya ornek@mail.com',
-                                        prefixIcon: Icon(Icons.person_outline),
+                                        prefixIcon: AppIcon(
+                                          Icons.person_outline,
+                                        ),
                                       ),
                                       onFieldSubmitted:
                                           (_) =>
@@ -134,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ],
                                       decoration: InputDecoration(
                                         labelText: 'Şifre',
-                                        prefixIcon: const Icon(
+                                        prefixIcon: const AppIcon(
                                           Icons.lock_outline,
                                         ),
                                         suffixIcon: IconButton(
@@ -142,7 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               _obscurePassword
                                                   ? 'Şifreyi göster'
                                                   : 'Şifreyi gizle',
-                                          icon: Icon(
+                                          icon: AppIcon(
                                             _obscurePassword
                                                 ? Icons.visibility_outlined
                                                 : Icons.visibility_off_outlined,
@@ -209,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                Icon(
+                                                AppIcon(
                                                   Icons.error_outline,
                                                   size: 20,
                                                   color:
@@ -249,7 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                           strokeWidth: 2,
                                                         ),
                                                   )
-                                                  : const Icon(
+                                                  : const AppIcon(
                                                     Icons.login_rounded,
                                                   ),
                                           label: Text(
@@ -289,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     const SizedBox(height: 16),
                                     OutlinedButton.icon(
                                       onPressed: _openRegistration,
-                                      icon: const Icon(
+                                      icon: const AppIcon(
                                         Icons.person_add_outlined,
                                       ),
                                       label: const Text('Yeni Hesap Oluştur'),
@@ -303,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 12),
                         TextButton.icon(
                           onPressed: () => KvkkNoticeDialog.show(context),
-                          icon: const Icon(
+                          icon: const AppIcon(
                             Icons.privacy_tip_outlined,
                             size: 19,
                           ),
@@ -332,7 +335,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: colors.primaryContainer,
             borderRadius: BorderRadius.circular(24),
           ),
-          child: Icon(
+          child: AppIcon(
             Icons.agriculture_rounded,
             size: 40,
             color: colors.onPrimaryContainer,

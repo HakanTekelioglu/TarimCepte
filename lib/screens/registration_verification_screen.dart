@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../widgets/app_icon.dart';
+
 import '../providers/providers.dart';
 import 'home_screen.dart';
 
@@ -143,7 +145,10 @@ class _RegistrationVerificationScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('E-posta Dogrulama')),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text('E-posta Dogrulama'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -153,7 +158,7 @@ class _RegistrationVerificationScreenState
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-                Icon(
+                AppIcon(
                   Icons.mark_email_read_outlined,
                   size: 72,
                   color: Theme.of(context).primaryColor,
@@ -180,7 +185,7 @@ class _RegistrationVerificationScreenState
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Dogrulama Kodu',
-                    prefixIcon: Icon(Icons.pin_outlined),
+                    prefixIcon: AppIcon(Icons.pin_outlined),
                     border: OutlineInputBorder(),
                   ),
                   validator: _validateCode,

@@ -66,6 +66,13 @@ flutter:
   assets:
     - .env
 
+  # A complete, app-owned copy prevents missing-glyph boxes when Flutter's
+  # generated Material icon subset is stale or unavailable after deployment.
+  fonts:
+    - family: AppMaterialIcons
+      fonts:
+        - asset: assets/fonts/MaterialIcons-Regular.otf
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

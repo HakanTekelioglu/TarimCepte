@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../widgets/app_icon.dart';
 import '../domain/auth/turkish_phone_number.dart';
 import '../providers/providers.dart';
 import '../utils/app_constants.dart';
@@ -86,7 +88,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final distList = AppConstants.cityDistricts[_selectedCity] ?? [];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Kayıt Ol')),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: const Text('Kayıt Ol'),
+      ),
       body: SafeArea(
         child: Align(
           alignment: Alignment.topCenter,
@@ -119,7 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       textCapitalization: TextCapitalization.words,
                       decoration: const InputDecoration(
                         labelText: 'Ad Soyad',
-                        prefixIcon: Icon(Icons.person_outline),
+                        prefixIcon: AppIcon(Icons.person_outline),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -137,7 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: const InputDecoration(
                         labelText: 'E-posta',
                         hintText: 'ornek@mail.com',
-                        prefixIcon: Icon(Icons.mail_outline),
+                        prefixIcon: AppIcon(Icons.mail_outline),
                       ),
                       validator: (value) {
                         final email = value?.trim() ?? '';
@@ -162,7 +167,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Telefon Numarası',
                         hintText: '05XXXXXXXXX',
-                        prefixIcon: Icon(Icons.phone_outlined),
+                        prefixIcon: AppIcon(Icons.phone_outlined),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -184,13 +189,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Şifre',
-                        prefixIcon: const Icon(Icons.lock_outline),
+                        prefixIcon: const AppIcon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           tooltip:
                               _obscurePassword
                                   ? 'Şifreyi göster'
                                   : 'Şifreyi gizle',
-                          icon: Icon(
+                          icon: AppIcon(
                             _obscurePassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
@@ -220,13 +225,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
                         labelText: 'Şifre Tekrar',
-                        prefixIcon: const Icon(Icons.lock_outline),
+                        prefixIcon: const AppIcon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           tooltip:
                               _obscureConfirmPassword
                                   ? 'Şifreyi göster'
                                   : 'Şifreyi gizle',
-                          icon: Icon(
+                          icon: AppIcon(
                             _obscureConfirmPassword
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
@@ -253,9 +258,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     DropdownButtonFormField<String>(
                       initialValue: _selectedCity,
+                      icon: const AppIcon(Icons.keyboard_arrow_down_rounded),
                       decoration: const InputDecoration(
                         labelText: 'Şehir Seçimi',
-                        prefixIcon: Icon(Icons.location_city),
+                        prefixIcon: AppIcon(Icons.location_city),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -287,13 +293,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       padding: const EdgeInsets.only(top: 16),
                       child: DropdownButtonFormField<String>(
                         key: ValueKey(_selectedDistrict),
+                        icon: const AppIcon(Icons.keyboard_arrow_down_rounded),
                         initialValue:
                             distList.contains(_selectedDistrict)
                                 ? _selectedDistrict
                                 : null,
                         decoration: const InputDecoration(
                           labelText: 'İlçe Seçimi',
-                          prefixIcon: Icon(Icons.map),
+                          prefixIcon: AppIcon(Icons.map),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -365,7 +372,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                  : const Icon(Icons.person_add_outlined),
+                                  : const AppIcon(Icons.person_add_outlined),
                           label: Text(
                             auth.isLoading
                                 ? 'Hesap Oluşturuluyor…'

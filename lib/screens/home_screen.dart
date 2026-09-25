@@ -31,23 +31,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static const _destinations = [
     NavigationDestination(
-      icon: Icon(Icons.space_dashboard_outlined),
-      selectedIcon: Icon(Icons.space_dashboard_rounded),
+      icon: AppIcon(Icons.space_dashboard_outlined),
+      selectedIcon: AppIcon(Icons.space_dashboard_rounded),
       label: 'Ana Sayfa',
     ),
     NavigationDestination(
-      icon: Icon(Icons.price_change_outlined),
-      selectedIcon: Icon(Icons.price_change),
+      icon: AppIcon(Icons.price_change_outlined),
+      selectedIcon: AppIcon(Icons.price_change),
       label: 'Fiyatlar',
     ),
     NavigationDestination(
-      icon: Icon(Icons.history_outlined),
-      selectedIcon: Icon(Icons.history_rounded),
+      icon: AppIcon(Icons.history_outlined),
+      selectedIcon: AppIcon(Icons.history_rounded),
       label: 'Hasatlar',
     ),
     NavigationDestination(
-      icon: Icon(Icons.calendar_month_outlined),
-      selectedIcon: Icon(Icons.calendar_month_rounded),
+      icon: AppIcon(Icons.calendar_month_outlined),
+      selectedIcon: AppIcon(Icons.calendar_month_rounded),
       label: 'Sezonlar',
     ),
   ];
@@ -100,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
             actions: [
               IconButton(
                 tooltip: 'Ayarlar',
-                icon: const Icon(Icons.settings_outlined),
+                icon: const AppIcon(Icons.settings_outlined),
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -109,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               IconButton(
                 tooltip: 'Çıkış yap',
-                icon: const Icon(Icons.logout_rounded),
+                icon: const AppIcon(Icons.logout_rounded),
                 onPressed: _confirmLogout,
               ),
               const SizedBox(width: 4),
@@ -144,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? FloatingActionButton.extended(
                     tooltip: 'Yeni hasat kaydı ekle',
                     onPressed: _openAddHarvest,
-                    icon: const Icon(Icons.add_rounded),
+                    icon: const AppIcon(Icons.add_rounded),
                     label: const Text('Hasat Ekle'),
                   )
                   : null,
@@ -202,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: season.activeSeason!.name,
                       subtitle: 'Aktif sezon özeti',
                       trailing: Chip(
-                        avatar: const Icon(Icons.bolt_rounded, size: 17),
+                        avatar: const AppIcon(Icons.bolt_rounded, size: 17),
                         label: const Text('Aktif'),
                         backgroundColor:
                             Theme.of(context).colorScheme.primaryContainer,
@@ -365,7 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: colors.primary),
+          AppIcon(icon, size: 16, color: colors.primary),
           const SizedBox(width: 6),
           Text(label, style: Theme.of(context).textTheme.labelMedium),
         ],
@@ -497,7 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: colors.onPrimary.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: Icon(
+              child: AppIcon(
                 Icons.account_balance_wallet_outlined,
                 color: colors.onPrimary,
               ),
@@ -576,7 +576,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder:
           (dialogContext) => AlertDialog(
-            icon: const Icon(Icons.calendar_month_outlined),
+            icon: const AppIcon(Icons.calendar_month_outlined),
             title: const Text('Yeni Sezon Başlat'),
             content: Form(
               key: formKey,
@@ -600,7 +600,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Sezon Adı',
                         hintText: 'Örn. 2026 Yaz',
-                        prefixIcon: Icon(Icons.eco_outlined),
+                        prefixIcon: AppIcon(Icons.eco_outlined),
                       ),
                       validator:
                           (value) =>
@@ -617,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Komisyon Oranı',
                         hintText: 'Örn. 8,0',
-                        prefixIcon: Icon(Icons.percent_rounded),
+                        prefixIcon: AppIcon(Icons.percent_rounded),
                         suffixText: '%',
                       ),
                       validator: (value) {
@@ -669,7 +669,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder:
           (dialogContext) => AlertDialog(
-            icon: const Icon(Icons.logout_rounded),
+            icon: const AppIcon(Icons.logout_rounded),
             title: const Text('Çıkış yapılsın mı?'),
             content: const Text(
               'Hesabınızdan çıkış yapacaksınız. Kaydedilmiş verileriniz silinmez.',

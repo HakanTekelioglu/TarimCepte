@@ -177,6 +177,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         initialValue: city,
                         isExpanded: true,
                         isDense: true,
+                        icon: const AppIcon(Icons.keyboard_arrow_down_rounded),
                         decoration: const InputDecoration(
                           labelText: 'İl',
                           contentPadding: EdgeInsets.symmetric(
@@ -219,6 +220,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               districts.contains(district) ? district : null,
                           isExpanded: true,
                           isDense: true,
+                          icon: const AppIcon(
+                            Icons.keyboard_arrow_down_rounded,
+                          ),
                           decoration: const InputDecoration(
                             labelText: 'İlçe',
                             contentPadding: EdgeInsets.symmetric(
@@ -266,7 +270,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   horizontal: 12,
                   vertical: 12,
                 ),
-                prefixIcon: const Icon(Icons.search_rounded),
+                prefixIcon: const AppIcon(Icons.search_rounded),
                 prefixIconConstraints: const BoxConstraints(
                   minWidth: 42,
                   minHeight: 42,
@@ -280,7 +284,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                             _searchController.clear();
                             setState(() => _query = '');
                           },
-                          icon: const Icon(Icons.close_rounded),
+                          icon: const AppIcon(Icons.close_rounded),
                         ),
               ),
               onChanged: (value) => setState(() => _query = value.trim()),
@@ -415,7 +419,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 IconButton(
                   tooltip: '${product.name} fiyatını düzenle',
                   onPressed: () => _showEditPriceDialog(product),
-                  icon: const Icon(Icons.edit_outlined),
+                  icon: const AppIcon(Icons.edit_outlined),
                 ),
               ],
             ],
@@ -444,7 +448,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       context: context,
       builder:
           (dialogContext) => AlertDialog(
-            icon: const Icon(Icons.price_change_outlined),
+            icon: const AppIcon(Icons.price_change_outlined),
             title: Text('${product.name} Fiyatı'),
             content: Form(
               key: formKey,
@@ -468,7 +472,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ),
                     decoration: const InputDecoration(
                       labelText: 'Kilogram Fiyatı',
-                      prefixIcon: Icon(Icons.currency_lira_rounded),
+                      prefixIcon: AppIcon(Icons.currency_lira_rounded),
                       suffixText: '₺/kg',
                     ),
                     validator: (value) {

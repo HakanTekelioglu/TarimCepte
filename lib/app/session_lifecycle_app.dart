@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
 import '../utils/app_theme.dart';
+import '../widgets/app_icon.dart';
 
 class SessionLifecycleApp extends StatefulWidget {
   const SessionLifecycleApp({super.key});
@@ -110,7 +111,7 @@ class _AuthGateState extends State<_AuthGate> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.agriculture, size: 80, color: Color(0xFF2E7D32)),
+              AppIcon(Icons.agriculture, size: 80, color: Color(0xFF2E7D32)),
               SizedBox(height: 24),
               CircularProgressIndicator(),
               SizedBox(height: 16),
